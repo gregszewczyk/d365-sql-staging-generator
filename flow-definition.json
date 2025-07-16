@@ -73,26 +73,6 @@
         "operationMetadataId": "22222222-2222-2222-2222-222222222222"
       }
     },
-    "Initialize_SqlScript": {
-      "type": "InitializeVariable",
-      "inputs": {
-        "variables": [
-          {
-            "name": "SqlScript",
-            "type": "String",
-            "value": ""
-          }
-        ]
-      },
-      "runAfter": {
-        "Get_Entity_Attributes": [
-          "Succeeded"
-        ]
-      },
-      "metadata": {
-        "operationMetadataId": "33333333-3333-3333-3333-333333333333"
-      }
-    },
     "Initialize_TableName": {
       "type": "InitializeVariable",
       "inputs": {
@@ -105,7 +85,7 @@
         ]
       },
       "runAfter": {
-        "Initialize_SqlScript": [
+        "Get_Entity_Attributes": [
           "Succeeded"
         ]
       },
@@ -153,26 +133,6 @@
         "operationMetadataId": "66666666-6666-6666-6666-666666666666"
       }
     },
-    "Initialize_FinalOutput": {
-      "type": "InitializeVariable",
-      "inputs": {
-        "variables": [
-          {
-            "name": "FinalOutput",
-            "type": "String",
-            "value": ""
-          }
-        ]
-      },
-      "runAfter": {
-        "Initialize_DataType": [
-          "Succeeded"
-        ]
-      },
-      "metadata": {
-        "operationMetadataId": "77777777-7777-7777-7777-777777777777"
-      }
-    },
     "Set_Table_Name": {
       "type": "SetVariable",
       "inputs": {
@@ -180,7 +140,7 @@
         "value": "STG_@{toUpper(outputs('Get_Entity_Metadata')?['body/value']?[0]?['logicalname'])}"
       },
       "runAfter": {
-        "Initialize_FinalOutput": [
+        "Initialize_DataType": [
           "Succeeded"
         ]
       },
@@ -189,11 +149,8 @@
       }
     },
     "Start_SQL_Script": {
-      "type": "SetVariable",
-      "inputs": {
-        "name": "SqlScript",
-        "value": "-- Staging table for D365 entity: @{outputs('Get_Entity_Metadata')?['body/value']?[0]?['displayname']}\n-- Generated on: @{formatDateTime(utcnow(), 'yyyy-MM-dd HH:mm:ss')}\n\nIF OBJECT_ID('dbo.@{variables('TableName')}', 'U') IS NOT NULL\n    DROP TABLE dbo.@{variables('TableName')};\n\nCREATE TABLE dbo.@{variables('TableName')} ("
-      },
+      "type": "Compose",
+      "inputs": "-- Staging table for D365 entity: @{outputs('Get_Entity_Metadata')?['body/value']?[0]?['displayname']}\n-- Generated on: @{formatDateTime(utcnow(), 'yyyy-MM-dd HH:mm:ss')}\n\nIF OBJECT_ID('dbo.@{variables('TableName')}', 'U') IS NOT NULL\n    DROP TABLE dbo.@{variables('TableName')};\n\nCREATE TABLE dbo.@{variables('TableName')} (",
       "runAfter": {
         "Set_Table_Name": [
           "Succeeded"
@@ -523,11 +480,8 @@
       }
     },
     "Complete_SQL_Script": {
-      "type": "SetVariable",
-      "inputs": {
-        "name": "SqlScript",
-        "value": "@{variables('SqlScript')}\n@{substring(variables('FieldDefinitions'), 0, sub(length(variables('FieldDefinitions')), 2))}\n);\n\n-- Create indexes for performance\nCREATE CLUSTERED INDEX CIX_@{variables('TableName')}_CreatedDate \n    ON dbo.@{variables('TableName')} (CreatedDate);\n\nCREATE NONCLUSTERED INDEX NIX_@{variables('TableName')}_ProcessingStatus \n    ON dbo.@{variables('TableName')} (ProcessingStatus);\n\nCREATE NONCLUSTERED INDEX NIX_@{variables('TableName')}_BatchId \n    ON dbo.@{variables('TableName')} (BatchId);\n\n-- Grant permissions\nGRANT SELECT, INSERT, UPDATE, DELETE ON dbo.@{variables('TableName')} TO [db_datawriter];\nGRANT SELECT ON dbo.@{variables('TableName')} TO [db_datareader];\n\nPRINT 'Staging table @{variables('TableName')} created successfully';"
-      },
+      "type": "Compose",
+      "inputs": "@{outputs('Start_SQL_Script')}\n@{substring(variables('FieldDefinitions'), 0, sub(length(variables('FieldDefinitions')), 2))}\n);\n\n-- Create indexes for performance\nCREATE CLUSTERED INDEX CIX_@{variables('TableName')}_CreatedDate \n    ON dbo.@{variables('TableName')} (CreatedDate);\n\nCREATE NONCLUSTERED INDEX NIX_@{variables('TableName')}_ProcessingStatus \n    ON dbo.@{variables('TableName')} (ProcessingStatus);\n\nCREATE NONCLUSTERED INDEX NIX_@{variables('TableName')}_BatchId \n    ON dbo.@{variables('TableName')} (BatchId);\n\n-- Grant permissions\nGRANT SELECT, INSERT, UPDATE, DELETE ON dbo.@{variables('TableName')} TO [db_datawriter];\nGRANT SELECT ON dbo.@{variables('TableName')} TO [db_datareader];\n\nPRINT 'Staging table @{variables('TableName')} created successfully';",
       "runAfter": {
         "Add_System_Fields": [
           "Succeeded"
@@ -543,7 +497,7 @@
         "EntityName": "@{triggerBody()['text']}",
         "TableName": "@{variables('TableName')}",
         "GeneratedDate": "@{formatDateTime(utcnow(), 'yyyy-MM-dd HH:mm:ss')}",
-        "SqlScript": "@{variables('SqlScript')}"
+        "SqlScript": "@{outputs('Complete_SQL_Script')}"
       },
       "runAfter": {
         "Complete_SQL_Script": [
@@ -552,21 +506,6 @@
       },
       "metadata": {
         "operationMetadataId": "c9c9c9c9-c9c9-c9c9-c9c9-c9c9c9c9c9c9"
-      }
-    },
-    "Set_Final_Output": {
-      "type": "SetVariable",
-      "inputs": {
-        "name": "FinalOutput",
-        "value": "@{variables('SqlScript')}"
-      },
-      "runAfter": {
-        "Output_Final_SQL_Script": [
-          "Succeeded"
-        ]
-      },
-      "metadata": {
-        "operationMetadataId": "d0d0d0d0-d0d0-d0d0-d0d0-d0d0d0d0d0d0"
       }
     }
   },
