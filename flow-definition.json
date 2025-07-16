@@ -27,13 +27,13 @@
         }
       },
       "metadata": {
-        "operationMetadataId": "manual-trigger"
+        "operationMetadataId": "12345678-1234-1234-1234-123456789012"
       }
     }
   },
   "actions": {
     "Get_Entity_Metadata": {
-      "type": "ApiConnection",
+      "type": "OpenApiConnection",
       "inputs": {
         "host": {
           "connectionName": "shared_commondataserviceforapps",
@@ -47,11 +47,11 @@
         }
       },
       "metadata": {
-        "operationMetadataId": "get-entity-metadata"
+        "operationMetadataId": "11111111-1111-1111-1111-111111111111"
       }
     },
     "Get_Entity_Attributes": {
-      "type": "ApiConnection",
+      "type": "OpenApiConnection",
       "inputs": {
         "host": {
           "connectionName": "shared_commondataserviceforapps",
@@ -70,7 +70,7 @@
         ]
       },
       "metadata": {
-        "operationMetadataId": "get-entity-attributes"
+        "operationMetadataId": "22222222-2222-2222-2222-222222222222"
       }
     },
     "Initialize_SqlScript": {
@@ -90,7 +90,7 @@
         ]
       },
       "metadata": {
-        "operationMetadataId": "initialize-sqlscript"
+        "operationMetadataId": "33333333-3333-3333-3333-333333333333"
       }
     },
     "Initialize_TableName": {
@@ -110,7 +110,7 @@
         ]
       },
       "metadata": {
-        "operationMetadataId": "initialize-tablename"
+        "operationMetadataId": "44444444-4444-4444-4444-444444444444"
       }
     },
     "Initialize_FieldDefinitions": {
@@ -130,7 +130,7 @@
         ]
       },
       "metadata": {
-        "operationMetadataId": "initialize-fielddefinitions"
+        "operationMetadataId": "55555555-5555-5555-5555-555555555555"
       }
     },
     "Initialize_DataType": {
@@ -150,7 +150,7 @@
         ]
       },
       "metadata": {
-        "operationMetadataId": "initialize-datatype"
+        "operationMetadataId": "66666666-6666-6666-6666-666666666666"
       }
     },
     "Initialize_FinalOutput": {
@@ -170,7 +170,7 @@
         ]
       },
       "metadata": {
-        "operationMetadataId": "initialize-finaloutput"
+        "operationMetadataId": "77777777-7777-7777-7777-777777777777"
       }
     },
     "Set_Table_Name": {
@@ -185,7 +185,7 @@
         ]
       },
       "metadata": {
-        "operationMetadataId": "set-table-name"
+        "operationMetadataId": "88888888-8888-8888-8888-888888888888"
       }
     },
     "Start_SQL_Script": {
@@ -200,7 +200,7 @@
         ]
       },
       "metadata": {
-        "operationMetadataId": "start-sql-script"
+        "operationMetadataId": "99999999-9999-9999-9999-999999999999"
       }
     },
     "Apply_to_each_Attribute": {
@@ -219,6 +219,9 @@
                   "inputs": {
                     "name": "DataType",
                     "value": "NVARCHAR(@{if(greater(items('Apply_to_each_Attribute')?['maxlength'], 4000), 'MAX', string(items('Apply_to_each_Attribute')?['maxlength']))})"
+                  },
+                  "metadata": {
+                    "operationMetadataId": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
                   }
                 }
               }
@@ -231,6 +234,9 @@
                   "inputs": {
                     "name": "DataType",
                     "value": "INT"
+                  },
+                  "metadata": {
+                    "operationMetadataId": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"
                   }
                 }
               }
@@ -243,6 +249,9 @@
                   "inputs": {
                     "name": "DataType",
                     "value": "BIGINT"
+                  },
+                  "metadata": {
+                    "operationMetadataId": "cccccccc-cccc-cccc-cccc-cccccccccccc"
                   }
                 }
               }
@@ -255,6 +264,9 @@
                   "inputs": {
                     "name": "DataType",
                     "value": "FLOAT"
+                  },
+                  "metadata": {
+                    "operationMetadataId": "dddddddd-dddd-dddd-dddd-dddddddddddd"
                   }
                 }
               }
@@ -267,6 +279,9 @@
                   "inputs": {
                     "name": "DataType",
                     "value": "DECIMAL(@{items('Apply_to_each_Attribute')?['precision']}, @{items('Apply_to_each_Attribute')?['scale']})"
+                  },
+                  "metadata": {
+                    "operationMetadataId": "eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee"
                   }
                 }
               }
@@ -279,6 +294,9 @@
                   "inputs": {
                     "name": "DataType",
                     "value": "DATETIME2(7)"
+                  },
+                  "metadata": {
+                    "operationMetadataId": "ffffffff-ffff-ffff-ffff-ffffffffffff"
                   }
                 }
               }
@@ -291,6 +309,9 @@
                   "inputs": {
                     "name": "DataType",
                     "value": "BIT"
+                  },
+                  "metadata": {
+                    "operationMetadataId": "10101010-1010-1010-1010-101010101010"
                   }
                 }
               }
@@ -303,6 +324,9 @@
                   "inputs": {
                     "name": "DataType",
                     "value": "UNIQUEIDENTIFIER"
+                  },
+                  "metadata": {
+                    "operationMetadataId": "20202020-2020-2020-2020-202020202020"
                   }
                 }
               }
@@ -315,6 +339,9 @@
                   "inputs": {
                     "name": "DataType",
                     "value": "NVARCHAR(MAX)"
+                  },
+                  "metadata": {
+                    "operationMetadataId": "30303030-3030-3030-3030-303030303030"
                   }
                 }
               }
@@ -327,6 +354,9 @@
                   "inputs": {
                     "name": "DataType",
                     "value": "MONEY"
+                  },
+                  "metadata": {
+                    "operationMetadataId": "40404040-4040-4040-4040-404040404040"
                   }
                 }
               }
@@ -339,6 +369,9 @@
                   "inputs": {
                     "name": "DataType",
                     "value": "INT"
+                  },
+                  "metadata": {
+                    "operationMetadataId": "50505050-5050-5050-5050-505050505050"
                   }
                 }
               }
@@ -351,6 +384,9 @@
                   "inputs": {
                     "name": "DataType",
                     "value": "UNIQUEIDENTIFIER"
+                  },
+                  "metadata": {
+                    "operationMetadataId": "60606060-6060-6060-6060-606060606060"
                   }
                 }
               }
@@ -363,6 +399,9 @@
                   "inputs": {
                     "name": "DataType",
                     "value": "UNIQUEIDENTIFIER"
+                  },
+                  "metadata": {
+                    "operationMetadataId": "70707070-7070-7070-7070-707070707070"
                   }
                 }
               }
@@ -375,6 +414,9 @@
                   "inputs": {
                     "name": "DataType",
                     "value": "UNIQUEIDENTIFIER"
+                  },
+                  "metadata": {
+                    "operationMetadataId": "80808080-8080-8080-8080-808080808080"
                   }
                 }
               }
@@ -387,6 +429,9 @@
                   "inputs": {
                     "name": "DataType",
                     "value": "INT"
+                  },
+                  "metadata": {
+                    "operationMetadataId": "90909090-9090-9090-9090-909090909090"
                   }
                 }
               }
@@ -399,6 +444,9 @@
                   "inputs": {
                     "name": "DataType",
                     "value": "INT"
+                  },
+                  "metadata": {
+                    "operationMetadataId": "a1a1a1a1-a1a1-a1a1-a1a1-a1a1a1a1a1a1"
                   }
                 }
               }
@@ -411,9 +459,15 @@
                 "inputs": {
                   "name": "DataType",
                   "value": "NVARCHAR(255)"
+                },
+                "metadata": {
+                  "operationMetadataId": "b2b2b2b2-b2b2-b2b2-b2b2-b2b2b2b2b2b2"
                 }
               }
             }
+          },
+          "metadata": {
+            "operationMetadataId": "c3c3c3c3-c3c3-c3c3-c3c3-c3c3c3c3c3c3"
           }
         },
         "Build_Field_Definition": {
@@ -423,6 +477,9 @@
             "Switch_Data_Type": [
               "Succeeded"
             ]
+          },
+          "metadata": {
+            "operationMetadataId": "d4d4d4d4-d4d4-d4d4-d4d4-d4d4d4d4d4d4"
           }
         },
         "Append_Field_Definition": {
@@ -435,6 +492,9 @@
             "Build_Field_Definition": [
               "Succeeded"
             ]
+          },
+          "metadata": {
+            "operationMetadataId": "e5e5e5e5-e5e5-e5e5-e5e5-e5e5e5e5e5e5"
           }
         }
       },
@@ -444,7 +504,7 @@
         ]
       },
       "metadata": {
-        "operationMetadataId": "apply-to-each-attribute"
+        "operationMetadataId": "f6f6f6f6-f6f6-f6f6-f6f6-f6f6f6f6f6f6"
       }
     },
     "Add_System_Fields": {
@@ -459,7 +519,7 @@
         ]
       },
       "metadata": {
-        "operationMetadataId": "add-system-fields"
+        "operationMetadataId": "a7a7a7a7-a7a7-a7a7-a7a7-a7a7a7a7a7a7"
       }
     },
     "Complete_SQL_Script": {
@@ -474,7 +534,7 @@
         ]
       },
       "metadata": {
-        "operationMetadataId": "complete-sql-script"
+        "operationMetadataId": "b8b8b8b8-b8b8-b8b8-b8b8-b8b8b8b8b8b8"
       }
     },
     "Output_Final_SQL_Script": {
@@ -491,7 +551,7 @@
         ]
       },
       "metadata": {
-        "operationMetadataId": "output-final-sql-script"
+        "operationMetadataId": "c9c9c9c9-c9c9-c9c9-c9c9-c9c9c9c9c9c9"
       }
     },
     "Set_Final_Output": {
@@ -506,7 +566,7 @@
         ]
       },
       "metadata": {
-        "operationMetadataId": "set-final-output"
+        "operationMetadataId": "d0d0d0d0-d0d0-d0d0-d0d0-d0d0d0d0d0d0"
       }
     }
   },
