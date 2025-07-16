@@ -44,8 +44,7 @@
           "entityName": "entitydefinitions",
           "$filter": "logicalname eq '@{triggerBody()['text']}'",
           "$select": "logicalname,displayname,entitysetname,metadataid"
-        },
-        "authentication": "@parameters('$connections')['shared_commondataserviceforapps']['connectionId']"
+        }
       },
       "metadata": {
         "operationMetadataId": "get-entity-metadata"
@@ -63,8 +62,7 @@
           "entityName": "attributedefinitions",
           "$filter": "_entitydefinition_value eq '@{first(outputs('Get_Entity_Metadata')?['body/value'])?['metadataid']}'",
           "$select": "logicalname,displayname,attributetype,maxlength,precision,scale,isrequired,isprimarykey,defaultvalue"
-        },
-        "authentication": "@parameters('$connections')['shared_commondataserviceforapps']['connectionId']"
+        }
       },
       "runAfter": {
         "Get_Entity_Metadata": [
