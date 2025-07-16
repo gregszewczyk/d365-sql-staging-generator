@@ -1,0 +1,270 @@
+{
+  "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "$connections": {
+      "defaultValue": {},
+      "type": "Object"
+    },
+    "dataverseEnvironmentUrl": {
+      "defaultValue": "https://yourdomain.crm.dynamics.com",
+      "type": "String"
+    }
+  },
+      "definition": {
+      "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+      "contentVersion": "1.0.0.0",
+      "parameters": {
+        "$connections": {
+          "defaultValue": {},
+          "type": "Object"
+        },
+        "$authentication": {
+          "defaultValue": {},
+          "type": "SecureObject"
+        }
+      },
+  "triggers": {
+    "manual": {
+      "type": "Request",
+      "kind": "Button",
+      "inputs": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "tableName": {
+              "type": "string",
+              "title": "Table Name",
+              "description": "Enter the logical name of the D365 table (e.g., account, contact, opportunity)"
+            }
+          },
+          "required": ["tableName"]
+        }
+      }
+    }
+  },
+  "actions": {
+    "Initialize_TableName": {
+      "type": "InitializeVariable",
+      "inputs": {
+        "variables": [
+          {
+            "name": "TableName",
+            "type": "String",
+            "value": "@triggerBody()['tableName']"
+          }
+        ]
+      },
+      "runAfter": {}
+    },
+    "Initialize_SQLString": {
+      "type": "InitializeVariable",
+      "inputs": {
+        "variables": [
+          {
+            "name": "SQLString",
+            "type": "String",
+            "value": ""
+          }
+        ]
+      },
+      "runAfter": {
+        "Initialize_TableName": ["Succeeded"]
+      }
+    },
+    "Get_Entity_Metadata": {
+      "type": "OpenApiConnection",
+      "inputs": {
+        "host": {
+          "connectionName": "shared_commondataserviceforapps",
+          "operationId": "HttpRequest",
+          "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+        },
+        "parameters": {
+          "method": "GET",
+          "uri": "@{concat(parameters('dataverseEnvironmentUrl'), '/api/data/v9.2/EntityDefinitions(LogicalName=''', variables('TableName'), ''')?$select=LogicalName,EntitySetName,PrimaryIdAttribute,PrimaryNameAttribute,SchemaName')}",
+          "authentication": "@parameters('$connections')['shared_commondataserviceforapps']['connectionId']"
+        }
+      },
+      "runAfter": {
+        "Initialize_SQLString": ["Succeeded"]
+      }
+    },
+    "Get_Attributes": {
+      "type": "OpenApiConnection",
+      "inputs": {
+        "host": {
+          "connectionName": "shared_commondataserviceforapps",
+          "operationId": "HttpRequest",
+          "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+        },
+        "parameters": {
+          "method": "GET",
+          "uri": "@{concat(parameters('dataverseEnvironmentUrl'), '/api/data/v9.2/EntityDefinitions(LogicalName=''', variables('TableName'), ''')/Attributes?$select=LogicalName,AttributeType,MaxLength,Precision,Scale,IsPrimaryId,IsValidForCreate,IsValidForUpdate,RequiredLevel,AttributeTypeName&$filter=AttributeType ne Microsoft.Dynamics.CRM.AttributeTypeCode''Virtual'' and AttributeType ne Microsoft.Dynamics.CRM.AttributeTypeCode''EntityName''')}",
+          "authentication": "@parameters('$connections')['shared_commondataserviceforapps']['connectionId']"
+        }
+      },
+      "runAfter": {
+        "Get_Entity_Metadata": ["Succeeded"]
+      }
+    },
+    "Compose_DROP_Statement": {
+      "type": "Compose",
+      "inputs": "-- Generated SQL Script for @{variables('TableName')} staging table\r\n-- Generated on: @{formatDateTime(utcNow(), 'yyyy-MM-dd HH:mm:ss')} UTC\r\n\r\nDROP TABLE IF EXISTS [dbo].[@{variables('TableName')}_staging];\r\nGO\r\n\r\n",
+      "runAfter": {
+        "Get_Attributes": ["Succeeded"]
+      }
+    },
+    "Append_DROP_Statement": {
+      "type": "AppendToStringVariable",
+      "inputs": {
+        "name": "SQLString",
+        "value": "@outputs('Compose_DROP_Statement')"
+      },
+      "runAfter": {
+        "Compose_DROP_Statement": ["Succeeded"]
+      }
+    },
+    "Compose_CREATE_Header": {
+      "type": "Compose",
+      "inputs": "CREATE TABLE [dbo].[@{variables('TableName')}_staging]\r\n(\r\n",
+      "runAfter": {
+        "Append_DROP_Statement": ["Succeeded"]
+      }
+    },
+    "Append_CREATE_Header": {
+      "type": "AppendToStringVariable",
+      "inputs": {
+        "name": "SQLString",
+        "value": "@outputs('Compose_CREATE_Header')"
+      },
+      "runAfter": {
+        "Compose_CREATE_Header": ["Succeeded"]
+      }
+    },
+    "Initialize_ColumnCount": {
+      "type": "InitializeVariable",
+      "inputs": {
+        "variables": [
+          {
+            "name": "ColumnCount",
+            "type": "Integer",
+            "value": 0
+          }
+        ]
+      },
+      "runAfter": {
+        "Append_CREATE_Header": ["Succeeded"]
+      }
+    },
+    "For_Each_Attribute": {
+      "type": "Foreach",
+      "inputs": {
+        "items": "@body('Get_Attributes')?['value']"
+      },
+      "actions": {
+        "Increment_ColumnCount": {
+          "type": "IncrementVariable",
+          "inputs": {
+            "name": "ColumnCount",
+            "value": 1
+          }
+        },
+        "Compose_SQL_DataType": {
+          "type": "Compose",
+          "inputs": "@if(equals(item()?['AttributeType'], 'String'), \r\n    if(greater(coalesce(item()?['MaxLength'], 0), 0), \r\n        concat('NVARCHAR(', item()?['MaxLength'], ')'), \r\n        'NVARCHAR(MAX)'), \r\n    if(equals(item()?['AttributeType'], 'Memo'), \r\n        'NVARCHAR(MAX)', \r\n        if(equals(item()?['AttributeType'], 'Integer'), \r\n            'INT', \r\n            if(equals(item()?['AttributeType'], 'BigInt'), \r\n                'BIGINT', \r\n                if(equals(item()?['AttributeType'], 'Decimal'), \r\n                    concat('DECIMAL(', coalesce(item()?['Precision'], 18), ',', coalesce(item()?['Scale'], 2), ')'), \r\n                    if(equals(item()?['AttributeType'], 'Money'), \r\n                        'MONEY', \r\n                        if(equals(item()?['AttributeType'], 'DateTime'), \r\n                            'DATETIME2', \r\n                            if(equals(item()?['AttributeType'], 'Boolean'), \r\n                                'BIT', \r\n                                if(equals(item()?['AttributeType'], 'Uniqueidentifier'), \r\n                                    'UNIQUEIDENTIFIER', \r\n                                    if(equals(item()?['AttributeType'], 'Double'), \r\n                                        'FLOAT', \r\n                                        if(equals(item()?['AttributeType'], 'Picklist'), \r\n                                            'INT', \r\n                                            if(equals(item()?['AttributeType'], 'Lookup'), \r\n                                                'UNIQUEIDENTIFIER', \r\n                                                'NVARCHAR(MAX)'))))))))))) ",
+          "runAfter": {
+            "Increment_ColumnCount": ["Succeeded"]
+          }
+        },
+        "Compose_NULL_Constraint": {
+          "type": "Compose",
+          "inputs": "@if(or(equals(item()?['RequiredLevel'], 'SystemRequired'), equals(item()?['IsPrimaryId'], true)), ' NOT NULL', ' NULL')",
+          "runAfter": {
+            "Compose_SQL_DataType": ["Succeeded"]
+          }
+        },
+        "Compose_PRIMARY_KEY": {
+          "type": "Compose",
+          "inputs": "@if(equals(item()?['IsPrimaryId'], true), ' PRIMARY KEY', '')",
+          "runAfter": {
+            "Compose_NULL_Constraint": ["Succeeded"]
+          }
+        },
+        "Compose_Column_Definition": {
+          "type": "Compose",
+          "inputs": "@concat('    [', item()?['LogicalName'], '] ', outputs('Compose_SQL_DataType'), outputs('Compose_NULL_Constraint'), outputs('Compose_PRIMARY_KEY'), if(equals(variables('ColumnCount'), length(body('Get_Attributes')?['value'])), '', ','), '\r\n')",
+          "runAfter": {
+            "Compose_PRIMARY_KEY": ["Succeeded"]
+          }
+        },
+        "Append_Column_Definition": {
+          "type": "AppendToStringVariable",
+          "inputs": {
+            "name": "SQLString",
+            "value": "@outputs('Compose_Column_Definition')"
+          },
+          "runAfter": {
+            "Compose_Column_Definition": ["Succeeded"]
+          }
+        }
+      },
+      "runAfter": {
+        "Initialize_ColumnCount": ["Succeeded"]
+      }
+    },
+    "Compose_CREATE_Footer": {
+      "type": "Compose",
+      "inputs": ");\r\nGO\r\n\r\n-- Index creation for better performance\r\nCREATE NONCLUSTERED INDEX [IX_@{variables('TableName')}_staging_ModifiedOn] ON [dbo].[@{variables('TableName')}_staging] ([modifiedon] DESC);\r\nGO\r\n\r\n-- Grant permissions\r\nGRANT SELECT, INSERT, UPDATE, DELETE ON [dbo].[@{variables('TableName')}_staging] TO [db_datareader], [db_datawriter];\r\nGO",
+      "runAfter": {
+        "For_Each_Attribute": ["Succeeded"]
+      }
+    },
+    "Append_CREATE_Footer": {
+      "type": "AppendToStringVariable",
+      "inputs": {
+        "name": "SQLString",
+        "value": "@outputs('Compose_CREATE_Footer')"
+      },
+      "runAfter": {
+        "Compose_CREATE_Footer": ["Succeeded"]
+      }
+    },
+    "Compose_Final_SQL": {
+      "type": "Compose",
+      "inputs": "@variables('SQLString')",
+      "runAfter": {
+        "Append_CREATE_Footer": ["Succeeded"]
+      }
+    },
+    "Compose_Metadata_Summary": {
+      "type": "Compose",
+      "inputs": {
+        "tableName": "@variables('TableName')",
+        "entitySetName": "@body('Get_Entity_Metadata')?['EntitySetName']",
+        "primaryIdAttribute": "@body('Get_Entity_Metadata')?['PrimaryIdAttribute']",
+        "primaryNameAttribute": "@body('Get_Entity_Metadata')?['PrimaryNameAttribute']",
+        "totalAttributes": "@length(body('Get_Attributes')?['value'])",
+        "generatedOn": "@formatDateTime(utcNow(), 'yyyy-MM-dd HH:mm:ss')",
+        "sqlScript": "@outputs('Compose_Final_SQL')"
+      },
+      "runAfter": {
+        "Compose_Final_SQL": ["Succeeded"]
+      }
+    },
+    "Response": {
+      "type": "Response",
+      "inputs": {
+        "statusCode": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": "@outputs('Compose_Metadata_Summary')"
+      },
+      "runAfter": {
+        "Compose_Final_SQL": ["Succeeded"]
+      }
+    }
+  },
+  "outputs": {}
+}}
