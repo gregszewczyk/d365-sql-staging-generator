@@ -1,0 +1,43 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ImportExportXml version="9.1.0.643" SolutionPackageVersion="9.1" languagecode="1033" generatedBy="PowerPlatform" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <SolutionManifest>
+    <UniqueName>D365SQLStagingGenerator</UniqueName>
+    <LocalizedNames>
+      <LocalizedName description="D365 SQL Staging Table Generator" languagecode="1033" />
+    </LocalizedNames>
+    <Descriptions>
+      <Description description="Power Automate flow for generating Azure SQL staging table scripts from D365 entity metadata" languagecode="1033" />
+    </Descriptions>
+    <Version>1.0.0.0</Version>
+    <Managed>0</Managed>
+    <Publisher>
+      <UniqueName>GregSzewczyk</UniqueName>
+      <LocalizedNames>
+        <LocalizedName description="Greg Szewczyk" languagecode="1033" />
+      </LocalizedNames>
+      <Descriptions>
+        <Description description="Custom publisher" languagecode="1033" />
+      </Descriptions>
+      <EMailAddress>greg@example.com</EMailAddress>
+      <SupportingWebsiteUrl>https://github.com/gregszewczyk</SupportingWebsiteUrl>
+      <CustomizationPrefix>gs</CustomizationPrefix>
+      <CustomizationOptionValuePrefix>10000</CustomizationOptionValuePrefix>
+      <Addresses>
+        <Address>
+          <AddressNumber>1</AddressNumber>
+          <AddressTypeCode>1</AddressTypeCode>
+          <City>Warsaw</City>
+          <County>Mazowieckie</County>
+          <Country>Poland</Country>
+          <PostalCode>00-001</PostalCode>
+          <StateOrProvince>Mazowieckie</StateOrProvince>
+          <Street1>Example Street 1</Street1>
+        </Address>
+      </Addresses>
+    </Publisher>
+    <RootComponents>
+      <RootComponent type="29" schemaName="gs_D365SQLStagingTableGenerator" behavior="0" />
+    </RootComponents>
+    <MissingDependencies />
+  </SolutionManifest>
+</ImportExportXml>

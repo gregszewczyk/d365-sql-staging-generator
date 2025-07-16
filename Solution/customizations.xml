@@ -1,0 +1,43 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ImportExportXml xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <Entities />
+  <Roles />
+  <Workflows>
+    <Workflow>
+      <WorkflowId>{12345678-1234-1234-1234-123456789012}</WorkflowId>
+      <Name>D365 SQL Staging Table Generator</Name>
+      <UniqueName>gs_D365SQLStagingTableGenerator</UniqueName>
+      <Description>Power Automate flow for generating Azure SQL staging table scripts from D365 entity metadata</Description>
+      <Category>5</Category>
+      <Scope>4</Scope>
+      <OnDemand>1</OnDemand>
+      <ChildWorkflow>0</ChildWorkflow>
+      <Type>1</Type>
+      <Mode>0</Mode>
+      <TriggerOnCreate>0</TriggerOnCreate>
+      <TriggerOnDelete>0</TriggerOnDelete>
+      <AsyncAutodelete>0</AsyncAutodelete>
+      <SyncWorkflowLogOnFailure>0</SyncWorkflowLogOnFailure>
+      <StateCode>1</StateCode>
+      <StatusCode>2</StatusCode>
+      <RunAs>1</RunAs>
+      <IsTransacted>1</IsTransacted>
+      <IntroducedVersion>1.0.0.0</IntroducedVersion>
+      <IsCustomizable>1</IsCustomizable>
+      <BusinessProcessType>0</BusinessProcessType>
+      <IsCustomProcessingStepAllowedForOtherPublishers>1</IsCustomProcessingStepAllowedForOtherPublishers>
+      <PrimaryEntity>none</PrimaryEntity>
+      <ClientData>
+        <FlowDefinition>Workflows/gs_D365SQLStagingTableGenerator.json</FlowDefinition>
+      </ClientData>
+    </Workflow>
+  </Workflows>
+  <FieldSecurityProfiles />
+  <Templates />
+  <EntityMaps />
+  <EntityRelationships />
+  <OrganizationSettings />
+  <optionsets />
+  <CustomControls />
+  <EntityDataProviders />
+</ImportExportXml>
