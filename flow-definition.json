@@ -1,516 +1,533 @@
 ﻿{
-  "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
-  "contentVersion": "1.0.0.0",
-  "parameters": {
-    "$connections": {
-      "defaultValue": {},
-      "type": "Object"
-    }
-  },
-  "triggers": {
-    "manual": {
-      "type": "Request",
-      "kind": "PowerAppV2",
-      "inputs": {
-        "schema": {
-          "type": "object",
-          "properties": {
-            "text": {
-              "title": "EntityName",
-              "type": "string",
-              "x-ms-powerflows-param-isPartial": false
-            }
-          },
-          "required": [
-            "text"
-          ]
+  "properties": {
+    "definition": {
+      "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+      "contentVersion": "1.0.0.0",
+      "parameters": {
+        "$connections": {
+          "defaultValue": {},
+          "type": "Object"
         }
       },
-      "metadata": {
-        "operationMetadataId": "manual-trigger"
-      }
-    }
-  },
-  "actions": {
-    "Get_Entity_Metadata": {
-      "type": "ApiConnection",
-      "inputs": {
-        "host": {
-          "connectionName": "shared_commondataserviceforapps",
-          "operationId": "ListRecords",
-          "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
-        },
-        "parameters": {
-          "entityName": "entitydefinitions",
-          "$filter": "logicalname eq '@{triggerBody()['text']}'",
-          "$select": "logicalname,displayname,entitysetname,metadataid"
-        },
-        "authentication": "@parameters('$connections')['shared_commondataserviceforapps']['connectionId']"
-      },
-      "metadata": {
-        "operationMetadataId": "get-entity-metadata"
-      }
-    },
-    "Get_Entity_Attributes": {
-      "type": "ApiConnection",
-      "inputs": {
-        "host": {
-          "connectionName": "shared_commondataserviceforapps",
-          "operationId": "ListRecords",
-          "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
-        },
-        "parameters": {
-          "entityName": "attributedefinitions",
-          "$filter": "_entitydefinition_value eq '@{first(outputs('Get_Entity_Metadata')?['body/value'])?['metadataid']}'",
-          "$select": "logicalname,displayname,attributetype,maxlength,precision,scale,isrequired,isprimarykey,defaultvalue"
-        },
-        "authentication": "@parameters('$connections')['shared_commondataserviceforapps']['connectionId']"
-      },
-      "runAfter": {
-        "Get_Entity_Metadata": [
-          "Succeeded"
-        ]
-      },
-      "metadata": {
-        "operationMetadataId": "get-entity-attributes"
-      }
-    },
-    "Initialize_SqlScript": {
-      "type": "InitializeVariable",
-      "inputs": {
-        "variables": [
-          {
-            "name": "SqlScript",
-            "type": "String",
-            "value": ""
+      "triggers": {
+        "manual": {
+          "type": "Request",
+          "kind": "PowerAppV2",
+          "inputs": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "text": {
+                  "title": "EntityName",
+                  "type": "string",
+                  "x-ms-powerflows-param-isPartial": false
+                }
+              },
+              "required": [
+                "text"
+              ]
+            }
+          },
+          "metadata": {
+            "operationMetadataId": "manual-trigger"
           }
-        ]
+        }
       },
-      "runAfter": {
-        "Get_Entity_Attributes": [
-          "Succeeded"
-        ]
-      },
-      "metadata": {
-        "operationMetadataId": "initialize-sqlscript"
-      }
-    },
-    "Initialize_TableName": {
-      "type": "InitializeVariable",
-      "inputs": {
-        "variables": [
-          {
-            "name": "TableName",
-            "type": "String",
-            "value": ""
-          }
-        ]
-      },
-      "runAfter": {
-        "Initialize_SqlScript": [
-          "Succeeded"
-        ]
-      },
-      "metadata": {
-        "operationMetadataId": "initialize-tablename"
-      }
-    },
-    "Initialize_FieldDefinitions": {
-      "type": "InitializeVariable",
-      "inputs": {
-        "variables": [
-          {
-            "name": "FieldDefinitions",
-            "type": "String",
-            "value": ""
-          }
-        ]
-      },
-      "runAfter": {
-        "Initialize_TableName": [
-          "Succeeded"
-        ]
-      },
-      "metadata": {
-        "operationMetadataId": "initialize-fielddefinitions"
-      }
-    },
-    "Initialize_DataType": {
-      "type": "InitializeVariable",
-      "inputs": {
-        "variables": [
-          {
-            "name": "DataType",
-            "type": "String",
-            "value": ""
-          }
-        ]
-      },
-      "runAfter": {
-        "Initialize_FieldDefinitions": [
-          "Succeeded"
-        ]
-      },
-      "metadata": {
-        "operationMetadataId": "initialize-datatype"
-      }
-    },
-    "Initialize_FinalOutput": {
-      "type": "InitializeVariable",
-      "inputs": {
-        "variables": [
-          {
-            "name": "FinalOutput",
-            "type": "String",
-            "value": ""
-          }
-        ]
-      },
-      "runAfter": {
-        "Initialize_DataType": [
-          "Succeeded"
-        ]
-      },
-      "metadata": {
-        "operationMetadataId": "initialize-finaloutput"
-      }
-    },
-    "Set_Table_Name": {
-      "type": "SetVariable",
-      "inputs": {
-        "name": "TableName",
-        "value": "STG_@{toUpper(outputs('Get_Entity_Metadata')?['body/value']?[0]?['logicalname'])}"
-      },
-      "runAfter": {
-        "Initialize_FinalOutput": [
-          "Succeeded"
-        ]
-      },
-      "metadata": {
-        "operationMetadataId": "set-table-name"
-      }
-    },
-    "Start_SQL_Script": {
-      "type": "SetVariable",
-      "inputs": {
-        "name": "SqlScript",
-        "value": "-- Staging table for D365 entity: @{outputs('Get_Entity_Metadata')?['body/value']?[0]?['displayname']}\n-- Generated on: @{formatDateTime(utcnow(), 'yyyy-MM-dd HH:mm:ss')}\n\nIF OBJECT_ID('dbo.@{variables('TableName')}', 'U') IS NOT NULL\n    DROP TABLE dbo.@{variables('TableName')};\n\nCREATE TABLE dbo.@{variables('TableName')} ("
-      },
-      "runAfter": {
-        "Set_Table_Name": [
-          "Succeeded"
-        ]
-      },
-      "metadata": {
-        "operationMetadataId": "start-sql-script"
-      }
-    },
-    "Apply_to_each_Attribute": {
-      "type": "Foreach",
-      "foreach": "@outputs('Get_Entity_Attributes')?['body/value']",
       "actions": {
-        "Switch_Data_Type": {
-          "type": "Switch",
-          "expression": "@items('Apply_to_each_Attribute')?['attributetype']",
-          "cases": {
-            "String": {
-              "case": "String",
-              "actions": {
-                "Set_String_Type": {
-                  "type": "SetVariable",
-                  "inputs": {
-                    "name": "DataType",
-                    "value": "NVARCHAR(@{if(greater(items('Apply_to_each_Attribute')?['maxlength'], 4000), 'MAX', string(items('Apply_to_each_Attribute')?['maxlength']))})"
+        "Get_Entity_Metadata": {
+          "type": "ApiConnection",
+          "inputs": {
+            "host": {
+              "connectionName": "shared_commondataserviceforapps",
+              "operationId": "ListRecords",
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+            },
+            "parameters": {
+              "entityName": "entitydefinitions",
+              "$filter": "logicalname eq '@{triggerBody()['text']}'",
+              "$select": "logicalname,displayname,entitysetname,metadataid"
+            },
+            "authentication": "@parameters('$connections')['shared_commondataserviceforapps']['connectionId']"
+          },
+          "metadata": {
+            "operationMetadataId": "get-entity-metadata"
+          }
+        },
+        "Get_Entity_Attributes": {
+          "type": "ApiConnection",
+          "inputs": {
+            "host": {
+              "connectionName": "shared_commondataserviceforapps",
+              "operationId": "ListRecords",
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+            },
+            "parameters": {
+              "entityName": "attributedefinitions",
+              "$filter": "_entitydefinition_value eq '@{first(outputs('Get_Entity_Metadata')?['body/value'])?['metadataid']}'",
+              "$select": "logicalname,displayname,attributetype,maxlength,precision,scale,isrequired,isprimarykey,defaultvalue"
+            },
+            "authentication": "@parameters('$connections')['shared_commondataserviceforapps']['connectionId']"
+          },
+          "runAfter": {
+            "Get_Entity_Metadata": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "get-entity-attributes"
+          }
+        },
+        "Initialize_SqlScript": {
+          "type": "InitializeVariable",
+          "inputs": {
+            "variables": [
+              {
+                "name": "SqlScript",
+                "type": "String",
+                "value": ""
+              }
+            ]
+          },
+          "runAfter": {
+            "Get_Entity_Attributes": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "initialize-sqlscript"
+          }
+        },
+        "Initialize_TableName": {
+          "type": "InitializeVariable",
+          "inputs": {
+            "variables": [
+              {
+                "name": "TableName",
+                "type": "String",
+                "value": ""
+              }
+            ]
+          },
+          "runAfter": {
+            "Initialize_SqlScript": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "initialize-tablename"
+          }
+        },
+        "Initialize_FieldDefinitions": {
+          "type": "InitializeVariable",
+          "inputs": {
+            "variables": [
+              {
+                "name": "FieldDefinitions",
+                "type": "String",
+                "value": ""
+              }
+            ]
+          },
+          "runAfter": {
+            "Initialize_TableName": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "initialize-fielddefinitions"
+          }
+        },
+        "Initialize_DataType": {
+          "type": "InitializeVariable",
+          "inputs": {
+            "variables": [
+              {
+                "name": "DataType",
+                "type": "String",
+                "value": ""
+              }
+            ]
+          },
+          "runAfter": {
+            "Initialize_FieldDefinitions": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "initialize-datatype"
+          }
+        },
+        "Initialize_FinalOutput": {
+          "type": "InitializeVariable",
+          "inputs": {
+            "variables": [
+              {
+                "name": "FinalOutput",
+                "type": "String",
+                "value": ""
+              }
+            ]
+          },
+          "runAfter": {
+            "Initialize_DataType": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "initialize-finaloutput"
+          }
+        },
+        "Set_Table_Name": {
+          "type": "SetVariable",
+          "inputs": {
+            "name": "TableName",
+            "value": "STG_@{toUpper(outputs('Get_Entity_Metadata')?['body/value']?[0]?['logicalname'])}"
+          },
+          "runAfter": {
+            "Initialize_FinalOutput": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "set-table-name"
+          }
+        },
+        "Start_SQL_Script": {
+          "type": "SetVariable",
+          "inputs": {
+            "name": "SqlScript",
+            "value": "-- Staging table for D365 entity: @{outputs('Get_Entity_Metadata')?['body/value']?[0]?['displayname']}\n-- Generated on: @{formatDateTime(utcnow(), 'yyyy-MM-dd HH:mm:ss')}\n\nIF OBJECT_ID('dbo.@{variables('TableName')}', 'U') IS NOT NULL\n    DROP TABLE dbo.@{variables('TableName')};\n\nCREATE TABLE dbo.@{variables('TableName')} ("
+          },
+          "runAfter": {
+            "Set_Table_Name": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "start-sql-script"
+          }
+        },
+        "Apply_to_each_Attribute": {
+          "type": "Foreach",
+          "foreach": "@outputs('Get_Entity_Attributes')?['body/value']",
+          "actions": {
+            "Switch_Data_Type": {
+              "type": "Switch",
+              "expression": "@items('Apply_to_each_Attribute')?['attributetype']",
+              "cases": {
+                "String": {
+                  "case": "String",
+                  "actions": {
+                    "Set_String_Type": {
+                      "type": "SetVariable",
+                      "inputs": {
+                        "name": "DataType",
+                        "value": "NVARCHAR(@{if(greater(items('Apply_to_each_Attribute')?['maxlength'], 4000), 'MAX', string(items('Apply_to_each_Attribute')?['maxlength']))})"
+                      }
+                    }
+                  }
+                },
+                "Integer": {
+                  "case": "Integer",
+                  "actions": {
+                    "Set_Integer_Type": {
+                      "type": "SetVariable",
+                      "inputs": {
+                        "name": "DataType",
+                        "value": "INT"
+                      }
+                    }
+                  }
+                },
+                "BigInt": {
+                  "case": "BigInt",
+                  "actions": {
+                    "Set_BigInt_Type": {
+                      "type": "SetVariable",
+                      "inputs": {
+                        "name": "DataType",
+                        "value": "BIGINT"
+                      }
+                    }
+                  }
+                },
+                "Double": {
+                  "case": "Double",
+                  "actions": {
+                    "Set_Double_Type": {
+                      "type": "SetVariable",
+                      "inputs": {
+                        "name": "DataType",
+                        "value": "FLOAT"
+                      }
+                    }
+                  }
+                },
+                "Decimal": {
+                  "case": "Decimal",
+                  "actions": {
+                    "Set_Decimal_Type": {
+                      "type": "SetVariable",
+                      "inputs": {
+                        "name": "DataType",
+                        "value": "DECIMAL(@{items('Apply_to_each_Attribute')?['precision']}, @{items('Apply_to_each_Attribute')?['scale']})"
+                      }
+                    }
+                  }
+                },
+                "DateTime": {
+                  "case": "DateTime",
+                  "actions": {
+                    "Set_DateTime_Type": {
+                      "type": "SetVariable",
+                      "inputs": {
+                        "name": "DataType",
+                        "value": "DATETIME2(7)"
+                      }
+                    }
+                  }
+                },
+                "Boolean": {
+                  "case": "Boolean",
+                  "actions": {
+                    "Set_Boolean_Type": {
+                      "type": "SetVariable",
+                      "inputs": {
+                        "name": "DataType",
+                        "value": "BIT"
+                      }
+                    }
+                  }
+                },
+                "Uniqueidentifier": {
+                  "case": "Uniqueidentifier",
+                  "actions": {
+                    "Set_Uniqueidentifier_Type": {
+                      "type": "SetVariable",
+                      "inputs": {
+                        "name": "DataType",
+                        "value": "UNIQUEIDENTIFIER"
+                      }
+                    }
+                  }
+                },
+                "Memo": {
+                  "case": "Memo",
+                  "actions": {
+                    "Set_Memo_Type": {
+                      "type": "SetVariable",
+                      "inputs": {
+                        "name": "DataType",
+                        "value": "NVARCHAR(MAX)"
+                      }
+                    }
+                  }
+                },
+                "Money": {
+                  "case": "Money",
+                  "actions": {
+                    "Set_Money_Type": {
+                      "type": "SetVariable",
+                      "inputs": {
+                        "name": "DataType",
+                        "value": "MONEY"
+                      }
+                    }
+                  }
+                },
+                "Picklist": {
+                  "case": "Picklist",
+                  "actions": {
+                    "Set_Picklist_Type": {
+                      "type": "SetVariable",
+                      "inputs": {
+                        "name": "DataType",
+                        "value": "INT"
+                      }
+                    }
+                  }
+                },
+                "Lookup": {
+                  "case": "Lookup",
+                  "actions": {
+                    "Set_Lookup_Type": {
+                      "type": "SetVariable",
+                      "inputs": {
+                        "name": "DataType",
+                        "value": "UNIQUEIDENTIFIER"
+                      }
+                    }
+                  }
+                },
+                "Customer": {
+                  "case": "Customer",
+                  "actions": {
+                    "Set_Customer_Type": {
+                      "type": "SetVariable",
+                      "inputs": {
+                        "name": "DataType",
+                        "value": "UNIQUEIDENTIFIER"
+                      }
+                    }
+                  }
+                },
+                "Owner": {
+                  "case": "Owner",
+                  "actions": {
+                    "Set_Owner_Type": {
+                      "type": "SetVariable",
+                      "inputs": {
+                        "name": "DataType",
+                        "value": "UNIQUEIDENTIFIER"
+                      }
+                    }
+                  }
+                },
+                "State": {
+                  "case": "State",
+                  "actions": {
+                    "Set_State_Type": {
+                      "type": "SetVariable",
+                      "inputs": {
+                        "name": "DataType",
+                        "value": "INT"
+                      }
+                    }
+                  }
+                },
+                "Status": {
+                  "case": "Status",
+                  "actions": {
+                    "Set_Status_Type": {
+                      "type": "SetVariable",
+                      "inputs": {
+                        "name": "DataType",
+                        "value": "INT"
+                      }
+                    }
+                  }
+                }
+              },
+              "default": {
+                "actions": {
+                  "Set_Default_Type": {
+                    "type": "SetVariable",
+                    "inputs": {
+                      "name": "DataType",
+                      "value": "NVARCHAR(255)"
+                    }
                   }
                 }
               }
             },
-            "Integer": {
-              "case": "Integer",
-              "actions": {
-                "Set_Integer_Type": {
-                  "type": "SetVariable",
-                  "inputs": {
-                    "name": "DataType",
-                    "value": "INT"
-                  }
-                }
+            "Build_Field_Definition": {
+              "type": "Compose",
+              "inputs": "    @{items('Apply_to_each_Attribute')?['logicalname']} @{variables('DataType')} @{if(equals(items('Apply_to_each_Attribute')?['isrequired'], true), 'NOT NULL', 'NULL')}@{if(not(empty(items('Apply_to_each_Attribute')?['defaultvalue'])), concat(' DEFAULT ', items('Apply_to_each_Attribute')?['defaultvalue']), '')}",
+              "runAfter": {
+                "Switch_Data_Type": [
+                  "Succeeded"
+                ]
               }
             },
-            "BigInt": {
-              "case": "BigInt",
-              "actions": {
-                "Set_BigInt_Type": {
-                  "type": "SetVariable",
-                  "inputs": {
-                    "name": "DataType",
-                    "value": "BIGINT"
-                  }
-                }
-              }
-            },
-            "Double": {
-              "case": "Double",
-              "actions": {
-                "Set_Double_Type": {
-                  "type": "SetVariable",
-                  "inputs": {
-                    "name": "DataType",
-                    "value": "FLOAT"
-                  }
-                }
-              }
-            },
-            "Decimal": {
-              "case": "Decimal",
-              "actions": {
-                "Set_Decimal_Type": {
-                  "type": "SetVariable",
-                  "inputs": {
-                    "name": "DataType",
-                    "value": "DECIMAL(@{items('Apply_to_each_Attribute')?['precision']}, @{items('Apply_to_each_Attribute')?['scale']})"
-                  }
-                }
-              }
-            },
-            "DateTime": {
-              "case": "DateTime",
-              "actions": {
-                "Set_DateTime_Type": {
-                  "type": "SetVariable",
-                  "inputs": {
-                    "name": "DataType",
-                    "value": "DATETIME2(7)"
-                  }
-                }
-              }
-            },
-            "Boolean": {
-              "case": "Boolean",
-              "actions": {
-                "Set_Boolean_Type": {
-                  "type": "SetVariable",
-                  "inputs": {
-                    "name": "DataType",
-                    "value": "BIT"
-                  }
-                }
-              }
-            },
-            "Uniqueidentifier": {
-              "case": "Uniqueidentifier",
-              "actions": {
-                "Set_Uniqueidentifier_Type": {
-                  "type": "SetVariable",
-                  "inputs": {
-                    "name": "DataType",
-                    "value": "UNIQUEIDENTIFIER"
-                  }
-                }
-              }
-            },
-            "Memo": {
-              "case": "Memo",
-              "actions": {
-                "Set_Memo_Type": {
-                  "type": "SetVariable",
-                  "inputs": {
-                    "name": "DataType",
-                    "value": "NVARCHAR(MAX)"
-                  }
-                }
-              }
-            },
-            "Money": {
-              "case": "Money",
-              "actions": {
-                "Set_Money_Type": {
-                  "type": "SetVariable",
-                  "inputs": {
-                    "name": "DataType",
-                    "value": "MONEY"
-                  }
-                }
-              }
-            },
-            "Picklist": {
-              "case": "Picklist",
-              "actions": {
-                "Set_Picklist_Type": {
-                  "type": "SetVariable",
-                  "inputs": {
-                    "name": "DataType",
-                    "value": "INT"
-                  }
-                }
-              }
-            },
-            "Lookup": {
-              "case": "Lookup",
-              "actions": {
-                "Set_Lookup_Type": {
-                  "type": "SetVariable",
-                  "inputs": {
-                    "name": "DataType",
-                    "value": "UNIQUEIDENTIFIER"
-                  }
-                }
-              }
-            },
-            "Customer": {
-              "case": "Customer",
-              "actions": {
-                "Set_Customer_Type": {
-                  "type": "SetVariable",
-                  "inputs": {
-                    "name": "DataType",
-                    "value": "UNIQUEIDENTIFIER"
-                  }
-                }
-              }
-            },
-            "Owner": {
-              "case": "Owner",
-              "actions": {
-                "Set_Owner_Type": {
-                  "type": "SetVariable",
-                  "inputs": {
-                    "name": "DataType",
-                    "value": "UNIQUEIDENTIFIER"
-                  }
-                }
-              }
-            },
-            "State": {
-              "case": "State",
-              "actions": {
-                "Set_State_Type": {
-                  "type": "SetVariable",
-                  "inputs": {
-                    "name": "DataType",
-                    "value": "INT"
-                  }
-                }
-              }
-            },
-            "Status": {
-              "case": "Status",
-              "actions": {
-                "Set_Status_Type": {
-                  "type": "SetVariable",
-                  "inputs": {
-                    "name": "DataType",
-                    "value": "INT"
-                  }
-                }
+            "Append_Field_Definition": {
+              "type": "AppendToStringVariable",
+              "inputs": {
+                "name": "FieldDefinitions",
+                "value": "@{outputs('Build_Field_Definition')},\n"
+              },
+              "runAfter": {
+                "Build_Field_Definition": [
+                  "Succeeded"
+                ]
               }
             }
           },
-          "default": {
-            "actions": {
-              "Set_Default_Type": {
-                "type": "SetVariable",
-                "inputs": {
-                  "name": "DataType",
-                  "value": "NVARCHAR(255)"
-                }
-              }
-            }
-          }
-        },
-        "Build_Field_Definition": {
-          "type": "Compose",
-          "inputs": "    @{items('Apply_to_each_Attribute')?['logicalname']} @{variables('DataType')} @{if(equals(items('Apply_to_each_Attribute')?['isrequired'], true), 'NOT NULL', 'NULL')}@{if(not(empty(items('Apply_to_each_Attribute')?['defaultvalue'])), concat(' DEFAULT ', items('Apply_to_each_Attribute')?['defaultvalue']), '')}",
           "runAfter": {
-            "Switch_Data_Type": [
+            "Start_SQL_Script": [
               "Succeeded"
             ]
+          },
+          "metadata": {
+            "operationMetadataId": "apply-to-each-attribute"
           }
         },
-        "Append_Field_Definition": {
+        "Add_System_Fields": {
           "type": "AppendToStringVariable",
           "inputs": {
             "name": "FieldDefinitions",
-            "value": "@{outputs('Build_Field_Definition')},\n"
+            "value": "    CreatedDate DATETIME2(7) NOT NULL DEFAULT GETDATE(),\n    ModifiedDate DATETIME2(7) NOT NULL DEFAULT GETDATE(),\n    SourceSystem NVARCHAR(50) NOT NULL DEFAULT 'D365',\n    ProcessingStatus NVARCHAR(20) NOT NULL DEFAULT 'PENDING',\n    ErrorMessage NVARCHAR(MAX) NULL,\n    BatchId UNIQUEIDENTIFIER NULL"
           },
           "runAfter": {
-            "Build_Field_Definition": [
+            "Apply_to_each_Attribute": [
               "Succeeded"
             ]
+          },
+          "metadata": {
+            "operationMetadataId": "add-system-fields"
+          }
+        },
+        "Complete_SQL_Script": {
+          "type": "SetVariable",
+          "inputs": {
+            "name": "SqlScript",
+            "value": "@{variables('SqlScript')}\n@{substring(variables('FieldDefinitions'), 0, sub(length(variables('FieldDefinitions')), 2))}\n);\n\n-- Create indexes for performance\nCREATE CLUSTERED INDEX CIX_@{variables('TableName')}_CreatedDate \n    ON dbo.@{variables('TableName')} (CreatedDate);\n\nCREATE NONCLUSTERED INDEX NIX_@{variables('TableName')}_ProcessingStatus \n    ON dbo.@{variables('TableName')} (ProcessingStatus);\n\nCREATE NONCLUSTERED INDEX NIX_@{variables('TableName')}_BatchId \n    ON dbo.@{variables('TableName')} (BatchId);\n\n-- Grant permissions\nGRANT SELECT, INSERT, UPDATE, DELETE ON dbo.@{variables('TableName')} TO [db_datawriter];\nGRANT SELECT ON dbo.@{variables('TableName')} TO [db_datareader];\n\nPRINT 'Staging table @{variables('TableName')} created successfully';"
+          },
+          "runAfter": {
+            "Add_System_Fields": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "complete-sql-script"
+          }
+        },
+        "Output_Final_SQL_Script": {
+          "type": "Compose",
+          "inputs": {
+            "EntityName": "@{triggerBody()['text']}",
+            "TableName": "@{variables('TableName')}",
+            "GeneratedDate": "@{formatDateTime(utcnow(), 'yyyy-MM-dd HH:mm:ss')}",
+            "SqlScript": "@{variables('SqlScript')}"
+          },
+          "runAfter": {
+            "Complete_SQL_Script": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "output-final-sql-script"
+          }
+        },
+        "Set_Final_Output": {
+          "type": "SetVariable",
+          "inputs": {
+            "name": "FinalOutput",
+            "value": "@{variables('SqlScript')}"
+          },
+          "runAfter": {
+            "Output_Final_SQL_Script": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "set-final-output"
           }
         }
       },
-      "runAfter": {
-        "Start_SQL_Script": [
-          "Succeeded"
-        ]
-      },
-      "metadata": {
-        "operationMetadataId": "apply-to-each-attribute"
-      }
+      "outputs": {}
     },
-    "Add_System_Fields": {
-      "type": "AppendToStringVariable",
-      "inputs": {
-        "name": "FieldDefinitions",
-        "value": "    CreatedDate DATETIME2(7) NOT NULL DEFAULT GETDATE(),\n    ModifiedDate DATETIME2(7) NOT NULL DEFAULT GETDATE(),\n    SourceSystem NVARCHAR(50) NOT NULL DEFAULT 'D365',\n    ProcessingStatus NVARCHAR(20) NOT NULL DEFAULT 'PENDING',\n    ErrorMessage NVARCHAR(MAX) NULL,\n    BatchId UNIQUEIDENTIFIER NULL"
-      },
-      "runAfter": {
-        "Apply_to_each_Attribute": [
-          "Succeeded"
-        ]
-      },
-      "metadata": {
-        "operationMetadataId": "add-system-fields"
-      }
-    },
-    "Complete_SQL_Script": {
-      "type": "SetVariable",
-      "inputs": {
-        "name": "SqlScript",
-        "value": "@{variables('SqlScript')}\n@{substring(variables('FieldDefinitions'), 0, sub(length(variables('FieldDefinitions')), 2))}\n);\n\n-- Create indexes for performance\nCREATE CLUSTERED INDEX CIX_@{variables('TableName')}_CreatedDate \n    ON dbo.@{variables('TableName')} (CreatedDate);\n\nCREATE NONCLUSTERED INDEX NIX_@{variables('TableName')}_ProcessingStatus \n    ON dbo.@{variables('TableName')} (ProcessingStatus);\n\nCREATE NONCLUSTERED INDEX NIX_@{variables('TableName')}_BatchId \n    ON dbo.@{variables('TableName')} (BatchId);\n\n-- Grant permissions\nGRANT SELECT, INSERT, UPDATE, DELETE ON dbo.@{variables('TableName')} TO [db_datawriter];\nGRANT SELECT ON dbo.@{variables('TableName')} TO [db_datareader];\n\nPRINT 'Staging table @{variables('TableName')} created successfully';"
-      },
-      "runAfter": {
-        "Add_System_Fields": [
-          "Succeeded"
-        ]
-      },
-      "metadata": {
-        "operationMetadataId": "complete-sql-script"
-      }
-    },
-    "Output_Final_SQL_Script": {
-      "type": "Compose",
-      "inputs": {
-        "EntityName": "@{triggerBody()['text']}",
-        "TableName": "@{variables('TableName')}",
-        "GeneratedDate": "@{formatDateTime(utcnow(), 'yyyy-MM-dd HH:mm:ss')}",
-        "SqlScript": "@{variables('SqlScript')}"
-      },
-      "runAfter": {
-        "Complete_SQL_Script": [
-          "Succeeded"
-        ]
-      },
-      "metadata": {
-        "operationMetadataId": "output-final-sql-script"
-      }
-    },
-    "Set_Final_Output": {
-      "type": "SetVariable",
-      "inputs": {
-        "name": "FinalOutput",
-        "value": "@{variables('SqlScript')}"
-      },
-      "runAfter": {
-        "Output_Final_SQL_Script": [
-          "Succeeded"
-        ]
-      },
-      "metadata": {
-        "operationMetadataId": "set-final-output"
+    "displayName": "Generate SQL Table from D365 Entity",
+    "description": "Generates SQL staging table creation scripts from D365 entity metadata",
+    "connectionReferences": {
+      "shared_commondataserviceforapps": {
+        "runtimeSource": "embedded",
+        "connection": {
+          "connectionReferenceLogicalName": "new_sharedcommondataserviceforapps_12345"
+        },
+        "api": {
+          "name": "shared_commondataserviceforapps"
+        }
       }
     }
-  },
-  "outputs": {}
+  }
 }
