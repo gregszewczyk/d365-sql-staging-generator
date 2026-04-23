@@ -1,0 +1,25 @@
+# .NET build output
+bin/
+obj/
+*.user
+*.suo
+.vs/
+
+# Local secrets - never commit real credentials
+appsettings.local.json
+src/D365SqlStagingGenerator/appsettings.local.json
+
+# Generated SQL output
+sql-output/
+src/D365SqlStagingGenerator/sql-output/
+
+# Rider / VS
+.idea/
+*.DotSettings.user
+
+# NuGet
+*.nupkg
+packages/
+
+# User secrets
+secrets.json
