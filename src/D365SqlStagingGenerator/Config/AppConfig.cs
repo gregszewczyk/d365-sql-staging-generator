@@ -1,3 +1,5 @@
+using D365SqlStagingGenerator.Shared;
+
 namespace D365SqlStagingGenerator.Config;
 
 public sealed class AppConfig
@@ -5,14 +7,6 @@ public sealed class AppConfig
     public DataverseConfig Dataverse { get; set; } = new();
     public List<string> Entities { get; set; } = new();
     public OutputConfig Output { get; set; } = new();
-}
-
-public sealed class DataverseConfig
-{
-    public string Url { get; set; } = string.Empty;
-    public string TenantId { get; set; } = string.Empty;
-    public string ClientId { get; set; } = string.Empty;
-    public string ClientSecret { get; set; } = string.Empty;
 }
 
 public sealed class OutputConfig

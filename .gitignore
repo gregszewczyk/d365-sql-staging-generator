@@ -8,10 +8,15 @@ obj/
 # Local secrets - never commit real credentials
 appsettings.local.json
 src/D365SqlStagingGenerator/appsettings.local.json
+src/D365EarlyBoundGenerator/appsettings.local.json
 
 # Generated SQL output
 sql-output/
 src/D365SqlStagingGenerator/sql-output/
+
+# Generated early-bound classes
+generated/
+src/D365EarlyBoundGenerator/generated/
 
 # Rider / VS
 .idea/

@@ -1,4 +1,4 @@
-using D365SqlStagingGenerator.Config;
+using D365SqlStagingGenerator.Shared;
 using Microsoft.PowerPlatform.Dataverse.Client;
 using Microsoft.Xrm.Sdk.Messages;
 using Microsoft.Xrm.Sdk.Metadata;
@@ -11,21 +11,7 @@ public sealed class DataverseMetadataService : IDisposable
 
     public DataverseMetadataService(DataverseConfig config)
     {
-        if (string.IsNullOrWhiteSpace(config.Url))
-            throw new InvalidOperationException("Dataverse:Url is required.");
-        if (string.IsNullOrWhiteSpace(config.ClientId))
-            throw new InvalidOperationException("Dataverse:ClientId is required.");
-        if (string.IsNullOrWhiteSpace(config.ClientSecret))
-            throw new InvalidOperationException("Dataverse:ClientSecret is required.");
-
-        var connectionString =
-            $"AuthType=ClientSecret;" +
-            $"Url={config.Url};" +
-            $"ClientId={config.ClientId};" +
-            $"ClientSecret={config.ClientSecret};" +
-            (string.IsNullOrWhiteSpace(config.TenantId) ? string.Empty : $"TenantId={config.TenantId};") +
-            $"RequireNewInstance=true";
-
+        var connectionString = DataverseConnectionStringBuilder.Build(config);
         _client = new ServiceClient(connectionString);
 
         if (!_client.IsReady)
