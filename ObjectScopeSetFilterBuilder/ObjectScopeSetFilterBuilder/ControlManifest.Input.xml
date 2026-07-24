@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<manifest>
+  <control namespace="GRC"
+           constructor="ObjectScopeSetFilterBuilder"
+           version="0.1.0"
+           display-name-key="Object Scope Set Filter Builder"
+           description-key="Visual AND/OR filter builder for Object Scope Sets with a live preview of matching CMDB objects"
+           control-type="virtual">
+    <external-service-usage enabled="false" />
+
+    <!-- Bound to any text column on the grc_objectscopeset form (e.g. grc_description or a
+         dedicated placeholder column). The control never writes to it; binding is only what
+         anchors a PCF field control onto the form. -->
+    <property name="boundField"
+              display-name-key="Bound field (placeholder)"
+              description-key="Text column the control is placed on. Not written to."
+              of-type="SingleLine.Text"
+              usage="bound"
+              required="true" />
+
+    <!-- Optional JSON that overrides the built-in entity/column names and the
+         object-type -> attributes catalogue. See README.md for the shape. -->
+    <property name="configJson"
+              display-name-key="Configuration JSON"
+              description-key="Optional JSON overriding default table/column names and the attribute catalogue per object type."
+              of-type="Multiple"
+              usage="input"
+              required="false" />
+
+    <!-- Preview page size (top N). -->
+    <property name="previewTop"
+              display-name-key="Preview row cap"
+              description-key="Maximum rows fetched by Run filter (default 50)."
+              of-type="Whole.None"
+              usage="input"
+              required="false" />
+
+    <resources>
+      <code path="index.ts" order="1" />
+      <platform-library name="React" version="16.14.0" />
+      <css path="css/ObjectScopeSetFilterBuilder.css" order="1" />
+    </resources>
+
+    <feature-usage>
+      <uses-feature name="WebAPI" required="true" />
+    </feature-usage>
+  </control>
+</manifest>
