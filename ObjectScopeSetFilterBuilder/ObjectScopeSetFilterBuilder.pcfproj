@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <PropertyGroup>
+    <PowerAppsTargetsPath>$(MSBuildExtensionsPath)\Microsoft\VisualStudio\v$(VisualStudioVersion)\PowerApps</PowerAppsTargetsPath>
+  </PropertyGroup>
+
+  <Import Project="$(PowerAppsTargetsPath)\Microsoft.PowerApps.VisualStudio.Pcf.props" Condition="Exists('$(PowerAppsTargetsPath)\Microsoft.PowerApps.VisualStudio.Pcf.props')" />
+
+  <PropertyGroup>
+    <Name>ObjectScopeSetFilterBuilder</Name>
+    <ProjectGuid>abaf2312-d625-4e65-8a41-ab9dbed6d67b</ProjectGuid>
+    <OutputPath>$(MSBuildThisFileDirectory)out\controls</OutputPath>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.PowerApps.MSBuild.Pcf" Version="1.*" />
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="All" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ExcludeDirectories Include="$(MSBuildThisFileDirectory)\.gitignore" />
+    <ExcludeDirectories Include="$(MSBuildThisFileDirectory)\bin\**" />
+    <ExcludeDirectories Include="$(MSBuildThisFileDirectory)\obj\**" />
+    <ExcludeDirectories Include="$(MSBuildThisFileDirectory)\solution\**" />
+    <ExcludeDirectories Include="$(OutputPath)\**" />
+  </ItemGroup>
+
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <Import Project="$(PowerAppsTargetsPath)\Microsoft.PowerApps.VisualStudio.Pcf.targets" Condition="Exists('$(PowerAppsTargetsPath)\Microsoft.PowerApps.VisualStudio.Pcf.targets')" />
+
+</Project>
