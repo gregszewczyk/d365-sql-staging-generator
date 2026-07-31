@@ -46,20 +46,27 @@ npm test          # 21 tests, inherited from the original
 Deliberately a second, independent solution so that only the design the
 customer picks gets promoted to test/prod:
 
+`pac solution init` takes the solution's unique name from **the folder it runs
+in** — there is no `--solution-name` argument. The original control's solution
+was created in a folder called `solution`, so this one must use a different
+folder name: same unique name would make importing this zip *update the
+original solution* rather than sit beside it.
+
 ```bash
 # from this folder
-mkdir solution && cd solution
+mkdir SolutionMulti && cd SolutionMulti
 pac solution init --publisher-name grc --publisher-prefix grc
 pac solution add-reference --path ..
 dotnet build
 ```
 
-Rename the solution in `solution/src/Other/Solution.xml` (or via
-`pac solution init --solution-name`) to something like
-`ObjectScopeSetFilterBuilderMulti` so it is distinguishable from the original
-solution in the environment's solution list.
+Unique names must be alphanumeric — no hyphens or spaces. Verify before
+importing that `SolutionMulti/src/Other/Solution.xml` contains
+`<UniqueName>SolutionMulti</UniqueName>`; editing that element (and the
+`<LocalizedName>` below it) is also a valid way to rename an already-inited
+solution folder.
 
-Import `solution/bin/Debug/solution.zip` through make.powerapps.com. Both
+Import `SolutionMulti/bin/Debug/SolutionMulti.zip` through make.powerapps.com. Both
 components then appear under **Get more components** on the scope set form, and
 you switch designs by changing which one is bound to the anchor column — or bind
 each to its own anchor column to show them side by side.

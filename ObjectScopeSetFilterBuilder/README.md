@@ -49,6 +49,11 @@ pac solution add-reference --path ..
 dotnet build   # or: msbuild /t:build /restore
 ```
 
+The solution's unique name comes from the folder `pac solution init` runs in
+(there is no `--solution-name` argument), so the above yields a solution called
+`solution`. The multi-type variant must therefore init in a *differently named*
+folder — see `../ObjectScopeSetFilterBuilderMulti/README.md`.
+
 Import the resulting zip, then add the control to the **grc_objectscopeset**
 main form: bind it to any text column (e.g. `grc_description` or a dedicated
 placeholder column — the control never writes to it) and stretch it across the

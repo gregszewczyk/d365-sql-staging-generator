@@ -4,4 +4,4 @@ generated/
 *.log
 bin/
 obj/
-solution/
+solution*/

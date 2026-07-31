@@ -22,7 +22,7 @@
     <ExcludeDirectories Include="$(MSBuildThisFileDirectory)\.gitignore" />
     <ExcludeDirectories Include="$(MSBuildThisFileDirectory)\bin\**" />
     <ExcludeDirectories Include="$(MSBuildThisFileDirectory)\obj\**" />
-    <ExcludeDirectories Include="$(MSBuildThisFileDirectory)\solution\**" />
+    <ExcludeDirectories Include="$(MSBuildThisFileDirectory)\solution*\**" />
     <ExcludeDirectories Include="$(OutputPath)\**" />
   </ItemGroup>
 
