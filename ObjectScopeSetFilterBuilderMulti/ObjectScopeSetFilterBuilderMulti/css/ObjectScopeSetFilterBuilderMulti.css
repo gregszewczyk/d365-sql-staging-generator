@@ -1,0 +1,328 @@
+/* Object Scope Set Filter Builder — styled to sit quietly inside a
+   model-driven form (Segoe UI, neutral greys, Fluent-blue accents). */
+
+.ossfbm-root {
+  font-family: "Segoe UI", "Segoe UI Web (West European)", -apple-system, sans-serif;
+  font-size: 14px;
+  color: #242424;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 4px 0;
+}
+
+.ossfbm-root *,
+.ossfbm-root *::before,
+.ossfbm-root *::after {
+  box-sizing: border-box;
+}
+
+/* --- type block cards --- */
+
+.ossfbm-block {
+  border: 1px solid #d1d1d1;
+  border-left: 4px solid #0f6cbd;
+  border-radius: 4px;
+  background: #ffffff;
+  padding: 12px;
+  margin-bottom: 4px;
+}
+
+.ossfbm-block-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.ossfbm-type-pill {
+  color: #ffffff;
+  background: #0f6cbd;
+  border-radius: 10px;
+  padding: 2px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.ossfbm-type-select {
+  max-width: 260px;
+}
+
+.ossfbm-or-separator {
+  text-align: center;
+  font-weight: 600;
+  font-size: 12px;
+  color: #616161;
+  margin: 6px 0;
+}
+
+/* --- groups --- */
+
+.ossfbm-group-root {
+  border: none;
+  padding: 0;
+}
+
+.ossfbm-group-nested {
+  border: 1px dashed #c7c7c7;
+  border-radius: 4px;
+  padding: 10px;
+  margin: 8px 0 8px 16px;
+  background: #fafafa;
+}
+
+.ossfbm-group-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.ossfbm-logic-toggle {
+  display: inline-flex;
+  border: 1px solid #d1d1d1;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.ossfbm-logic-btn {
+  border: none;
+  background: #ffffff;
+  color: #424242;
+  padding: 4px 12px;
+  font-size: 12px;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.ossfbm-logic-btn + .ossfbm-logic-btn {
+  border-left: 1px solid #d1d1d1;
+}
+
+.ossfbm-logic-active {
+  background: #0f6cbd;
+  color: #ffffff;
+  font-weight: 600;
+}
+
+/* --- condition rows --- */
+
+.ossfbm-condition-row {
+  display: grid;
+  grid-template-columns: minmax(140px, 1.2fr) minmax(110px, 0.8fr) minmax(140px, 1.4fr) 32px;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.ossfbm-input,
+.ossfbm-select {
+  font-family: inherit;
+  font-size: 13px;
+  color: #242424;
+  border: 1px solid #d1d1d1;
+  border-radius: 4px;
+  background: #ffffff;
+  padding: 5px 8px;
+  width: 100%;
+  min-width: 0;
+}
+
+.ossfbm-input:focus,
+.ossfbm-select:focus {
+  outline: 2px solid #0f6cbd;
+  outline-offset: -1px;
+}
+
+.ossfbm-icon-btn {
+  border: none;
+  background: transparent;
+  color: #616161;
+  font-size: 13px;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  line-height: 1;
+}
+
+.ossfbm-icon-btn:hover:not(:disabled) {
+  background: #f5f5f5;
+  color: #c50f1f;
+}
+
+/* --- buttons --- */
+
+.ossfbm-group-actions {
+  display: flex;
+  gap: 16px;
+  margin-top: 4px;
+}
+
+.ossfbm-link-btn {
+  border: none;
+  background: transparent;
+  color: #0f6cbd;
+  font-family: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  padding: 2px 0;
+}
+
+.ossfbm-link-btn:hover:not(:disabled) {
+  text-decoration: underline;
+}
+
+.ossfbm-add-block-btn {
+  width: 100%;
+  border: 1px dashed #0f6cbd;
+  border-radius: 4px;
+  background: transparent;
+  color: #0f6cbd;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 8px;
+  margin: 8px 0;
+  cursor: pointer;
+}
+
+.ossfbm-add-block-btn:hover:not(:disabled) {
+  background: #f0f6fc;
+}
+
+.ossfbm-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 8px 0 12px;
+}
+
+.ossfbm-btn {
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 4px;
+  padding: 6px 16px;
+  cursor: pointer;
+}
+
+.ossfbm-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.ossfbm-btn-primary {
+  background: #0f6cbd;
+  border: 1px solid #0f6cbd;
+  color: #ffffff;
+}
+
+.ossfbm-btn-primary:hover:not(:disabled) {
+  background: #115ea3;
+}
+
+.ossfbm-btn-secondary {
+  background: #ffffff;
+  border: 1px solid #d1d1d1;
+  color: #242424;
+}
+
+.ossfbm-btn-secondary:hover:not(:disabled) {
+  background: #f5f5f5;
+}
+
+/* --- preview --- */
+
+.ossfbm-preview {
+  border: 1px solid #d1d1d1;
+  border-radius: 4px;
+  background: #ffffff;
+  padding: 12px;
+}
+
+.ossfbm-preview-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.ossfbm-count-pill {
+  background: #e8f1fa;
+  color: #0f548c;
+  border-radius: 10px;
+  padding: 2px 10px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.ossfbm-preview-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.ossfbm-preview-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 5px 2px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.ossfbm-preview-row:last-child {
+  border-bottom: none;
+}
+
+.ossfbm-preview-row a {
+  color: #0f6cbd;
+  text-decoration: none;
+}
+
+.ossfbm-preview-row a:hover {
+  text-decoration: underline;
+}
+
+.ossfbm-row-type {
+  background: #f5f5f5;
+  color: #616161;
+  border-radius: 3px;
+  padding: 1px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* --- messages --- */
+
+.ossfbm-hint {
+  color: #616161;
+  font-size: 12px;
+}
+
+.ossfbm-dirty {
+  color: #8a6116;
+  font-size: 12px;
+}
+
+.ossfbm-saved {
+  color: #107c10;
+  font-size: 12px;
+}
+
+.ossfbm-error {
+  color: #c50f1f;
+  font-size: 12px;
+}
+
+.ossfbm-warning {
+  background: #fff8e7;
+  border: 1px solid #f2dca9;
+  border-radius: 4px;
+  color: #684b00;
+  font-size: 12px;
+  padding: 6px 10px;
+  margin-bottom: 8px;
+}

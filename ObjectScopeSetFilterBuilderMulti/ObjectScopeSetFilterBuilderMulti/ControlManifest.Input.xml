@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<manifest>
+  <!-- Multi-type variant of the Object Scope Set filter builder.
+
+       Deliberately a SEPARATE component (distinct constructor) from
+       GRC.ObjectScopeSetFilterBuilder so both designs can be installed in the
+       same environment at once and swapped on the form while the customer
+       decides. Do not rename the constructor back to the original — PCF
+       components are identified by namespace.constructor, so that would
+       collide with the original control instead of copying it. -->
+  <control namespace="GRC"
+           constructor="ObjectScopeSetFilterBuilderMulti"
+           version="0.1.0"
+           display-name-key="Object Scope Set Filter Builder (multi-type)"
+           description-key="Filter builder where each type block can span several source object types, with a live preview of matching CMDB objects"
+           control-type="virtual">
+    <external-service-usage enabled="false" />
+
+    <!-- Bound to any text column on the grc_objectscopeset form (e.g. grc_description or a
+         dedicated placeholder column). The control never writes to it; binding is only what
+         anchors a PCF field control onto the form. -->
+    <property name="boundField"
+              display-name-key="Bound field (placeholder)"
+              description-key="Text column the control is placed on. Not written to."
+              of-type="SingleLine.Text"
+              usage="bound"
+              required="true" />
+
+    <!-- Optional JSON that overrides the built-in entity/column names and the
+         object-type -> attributes catalogue. See README.md for the shape. -->
+    <property name="configJson"
+              display-name-key="Configuration JSON"
+              description-key="Optional JSON overriding default table/column names and the attribute catalogue per object type."
+              of-type="Multiple"
+              usage="input"
+              required="false" />
+
+    <!-- Preview page size (top N). -->
+    <property name="previewTop"
+              display-name-key="Preview row cap"
+              description-key="Maximum rows fetched by Run filter (default 50)."
+              of-type="Whole.None"
+              usage="input"
+              required="false" />
+
+    <resources>
+      <code path="index.ts" order="1" />
+      <platform-library name="React" version="16.14.0" />
+      <css path="css/ObjectScopeSetFilterBuilderMulti.css" order="1" />
+    </resources>
+
+    <feature-usage>
+      <uses-feature name="WebAPI" required="true" />
+    </feature-usage>
+  </control>
+</manifest>
