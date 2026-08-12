@@ -10,9 +10,9 @@
        collide with the original control instead of copying it. -->
   <control namespace="GRC"
            constructor="ObjectScopeSetFilterBuilderMulti"
-           version="0.1.0"
+           version="0.2.0"
            display-name-key="Object Scope Set Filter Builder (multi-type)"
-           description-key="Filter builder where each type block can span several source object types, with a live preview of matching CMDB objects"
+           description-key="Filter builder with one shared source-object-type list and a single criteria tree, with a live preview of matching CMDB objects"
            control-type="virtual">
     <external-service-usage enabled="false" />
 

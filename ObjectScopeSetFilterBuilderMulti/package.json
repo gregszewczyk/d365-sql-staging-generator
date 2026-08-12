@@ -1,6 +1,6 @@
 {
   "name": "object-scope-set-filter-builder-multi",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "PCF React virtual control: visual filter builder for GRC Object Scope Sets with live CMDB preview",
   "scripts": {
     "build": "pcf-scripts build",
