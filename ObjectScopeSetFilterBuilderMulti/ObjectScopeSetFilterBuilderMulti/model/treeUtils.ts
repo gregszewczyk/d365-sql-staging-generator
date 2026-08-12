@@ -1,4 +1,4 @@
-import { ConditionNode, GroupLogic, GroupNode, TypeBlockNode } from "./types";
+import { ConditionNode, GroupLogic, GroupNode, ScopeSetFilter } from "./types";
 
 let counter = 0;
 export function newId(prefix: string): string {
@@ -14,13 +14,13 @@ export function emptyGroup(logic: GroupLogic = "and"): GroupNode {
   return { id: newId("g"), logic, conditions: [emptyCondition()], groups: [] };
 }
 
-export function emptyBlock(objectType = ""): TypeBlockNode {
-  return { id: newId("b"), objectType, root: emptyGroup("and") };
+export function emptyFilter(objectTypes: string[] = []): ScopeSetFilter {
+  return { objectTypes, root: emptyGroup("and") };
 }
 
-/** Deep-clone the tree (plain data), apply a mutator, return the clone. */
-export function mutateTree(blocks: TypeBlockNode[], fn: (draft: TypeBlockNode[]) => void): TypeBlockNode[] {
-  const draft = JSON.parse(JSON.stringify(blocks)) as TypeBlockNode[];
+/** Deep-clone the filter (plain data), apply a mutator, return the clone. */
+export function mutateFilter(filter: ScopeSetFilter, fn: (draft: ScopeSetFilter) => void): ScopeSetFilter {
+  const draft = JSON.parse(JSON.stringify(filter)) as ScopeSetFilter;
   fn(draft);
   return draft;
 }
@@ -29,14 +29,6 @@ export function findGroup(root: GroupNode, groupId: string): GroupNode | undefin
   if (root.id === groupId) return root;
   for (const g of root.groups) {
     const found = findGroup(g, groupId);
-    if (found) return found;
-  }
-  return undefined;
-}
-
-export function findGroupInBlocks(blocks: TypeBlockNode[], groupId: string): GroupNode | undefined {
-  for (const b of blocks) {
-    const found = findGroup(b.root, groupId);
     if (found) return found;
   }
   return undefined;

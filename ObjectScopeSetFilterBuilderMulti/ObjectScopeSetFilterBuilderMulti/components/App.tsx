@@ -1,18 +1,25 @@
 import * as React from "react";
-import { BuilderConfig, findObjectType } from "../model/config";
+import {
+  attributeGapTypes,
+  BuilderConfig,
+  findObjectType,
+  intersectAttributes,
+  unionAttributes
+} from "../model/config";
 import { compileCountFetchXml, compileFetchXml } from "../model/fetchXmlCompiler";
 import { buildTree, flattenTree, loadCriteria, saveCriteria } from "../model/persistence";
 import {
-  emptyBlock,
   emptyCondition,
+  emptyFilter,
   emptyGroup,
-  findGroupInBlocks,
-  mutateTree,
+  findGroup,
+  mutateFilter,
   removeGroup
 } from "../model/treeUtils";
-import { ConditionNode, GroupLogic, TypeBlockNode } from "../model/types";
+import { ConditionNode, GroupLogic, ScopeSetFilter } from "../model/types";
 import { PreviewPanel, PreviewState } from "./PreviewPanel";
-import { TypeBlockCard } from "./TypeBlockCard";
+import { GroupPanel } from "./GroupPanel";
+import { TypeSelector } from "./TypeSelector";
 
 export interface AppProps {
   webAPI: ComponentFramework.WebApi;
@@ -28,10 +35,11 @@ const FORMATTED = "@OData.Community.Display.V1.FormattedValue";
 export const App: React.FC<AppProps> = (props) => {
   const { webAPI, config, scopeSetId, previewTop } = props;
 
-  const [blocks, setBlocks] = React.useState<TypeBlockNode[]>([]);
+  const [filter, setFilter] = React.useState<ScopeSetFilter>(emptyFilter());
   const [existingIds, setExistingIds] = React.useState<string[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [loadError, setLoadError] = React.useState<string | undefined>();
+  const [convertedNotice, setConvertedNotice] = React.useState(false);
   const [dirty, setDirty] = React.useState(false);
   const [saving, setSaving] = React.useState(false);
   const [saveMessage, setSaveMessage] = React.useState<string | undefined>();
@@ -40,7 +48,7 @@ export const App: React.FC<AppProps> = (props) => {
 
   const reload = React.useCallback(async () => {
     if (!scopeSetId) {
-      setBlocks([emptyBlock()]);
+      setFilter(emptyFilter());
       setExistingIds([]);
       setLoading(false);
       return;
@@ -49,13 +57,16 @@ export const App: React.FC<AppProps> = (props) => {
     setLoadError(undefined);
     try {
       const rows = await loadCriteria(webAPI, config, scopeSetId);
-      const tree = buildTree(rows);
-      setBlocks(tree.length > 0 ? tree : [emptyBlock()]);
+      const { filter: loaded, converted } = buildTree(rows);
+      setFilter(rows.length > 0 ? loaded : emptyFilter());
       setExistingIds(rows.map((r) => r.id as string).filter(Boolean));
-      setDirty(false);
+      setConvertedNotice(converted);
+      // A converted filter differs from what is stored, so it must be re-saved
+      // to take effect — surface it as unsaved work rather than silently drift.
+      setDirty(converted);
     } catch (e) {
       setLoadError((e as Error).message ?? String(e));
-      setBlocks([emptyBlock()]);
+      setFilter(emptyFilter());
     } finally {
       setLoading(false);
     }
@@ -65,61 +76,70 @@ export const App: React.FC<AppProps> = (props) => {
     void reload();
   }, [reload]);
 
-  const update = (fn: (draft: TypeBlockNode[]) => void) => {
-    setBlocks((prev) => mutateTree(prev, fn));
+  const update = (fn: (draft: ScopeSetFilter) => void) => {
+    setFilter((prev) => mutateFilter(prev, fn));
     setDirty(true);
     setSaveMessage(undefined);
   };
 
-  // --- tree edit handlers -------------------------------------------------
+  // --- attribute scoping ---------------------------------------------------
 
-  const onAddBlock = () => update((d) => d.push(emptyBlock()));
-  const onRemoveBlock = (blockId: string) =>
+  const attributes = React.useMemo(
+    () => intersectAttributes(config, filter.objectTypes),
+    [config, filter.objectTypes]
+  );
+  const allAttributes = React.useMemo(
+    () => unionAttributes(config, filter.objectTypes),
+    [config, filter.objectTypes]
+  );
+  const resolveAttribute = React.useCallback(
+    (logicalName: string) => allAttributes.find((a) => a.logicalName === logicalName),
+    [allAttributes]
+  );
+  const gapTypesFor = React.useCallback(
+    (logicalName: string) => attributeGapTypes(config, filter.objectTypes, logicalName),
+    [config, filter.objectTypes]
+  );
+
+  // --- edit handlers -------------------------------------------------------
+
+  // Toggling a type never touches the conditions: narrowing the attribute
+  // intersection flags affected conditions instead of deleting the user's work.
+  const onToggleType = (value: string) =>
     update((d) => {
-      const i = d.findIndex((b) => b.id === blockId);
-      if (i >= 0) d.splice(i, 1);
-      if (d.length === 0) d.push(emptyBlock());
-    });
-  const onSetType = (blockId: string, objectType: string) =>
-    update((d) => {
-      const b = d.find((x) => x.id === blockId);
-      if (!b) return;
-      b.objectType = objectType;
-      // Attributes differ per type, so existing conditions no longer apply.
-      b.root = emptyGroup("and");
+      const i = d.objectTypes.indexOf(value);
+      if (i >= 0) d.objectTypes.splice(i, 1);
+      else d.objectTypes.push(value);
     });
   const onSetLogic = (groupId: string, logic: GroupLogic) =>
     update((d) => {
-      const g = findGroupInBlocks(d, groupId);
+      const g = findGroup(d.root, groupId);
       if (g) g.logic = logic;
     });
   const onAddCondition = (groupId: string) =>
     update((d) => {
-      const g = findGroupInBlocks(d, groupId);
+      const g = findGroup(d.root, groupId);
       if (g) g.conditions.push(emptyCondition());
     });
   const onChangeCondition = (groupId: string, conditionId: string, patch: Partial<ConditionNode>) =>
     update((d) => {
-      const g = findGroupInBlocks(d, groupId);
+      const g = findGroup(d.root, groupId);
       const c = g?.conditions.find((x) => x.id === conditionId);
       if (c) Object.assign(c, patch);
     });
   const onDeleteCondition = (groupId: string, conditionId: string) =>
     update((d) => {
-      const g = findGroupInBlocks(d, groupId);
+      const g = findGroup(d.root, groupId);
       if (!g) return;
       const i = g.conditions.findIndex((x) => x.id === conditionId);
       if (i >= 0) g.conditions.splice(i, 1);
     });
   const onAddGroup = (parentGroupId: string) =>
     update((d) => {
-      const g = findGroupInBlocks(d, parentGroupId);
+      const g = findGroup(d.root, parentGroupId);
       if (g) g.groups.push(emptyGroup("or"));
     });
-  const onDeleteGroup = (groupId: string) =>
-    update((d) => {
-      d.forEach((b) => removeGroup(b.root, groupId));
-    });
+  const onDeleteGroup = (groupId: string) => update((d) => removeGroup(d.root, groupId));
 
   // --- preview (ephemeral: reads only, never writes) ----------------------
 
@@ -139,9 +159,9 @@ export const App: React.FC<AppProps> = (props) => {
   );
 
   const onRunFilter = async () => {
-    const fetchXml = compileFetchXml(blocks, compileOpts);
+    const fetchXml = compileFetchXml(filter, compileOpts);
     if (!fetchXml) {
-      setPreview({ status: "error", rows: [], error: "Add at least one type block with a source object type first." });
+      setPreview({ status: "error", rows: [], error: "Select at least one source object type first." });
       return;
     }
     setPreview({ status: "running", rows: [] });
@@ -167,7 +187,7 @@ export const App: React.FC<AppProps> = (props) => {
 
       let total: number | undefined;
       try {
-        const countXml = compileCountFetchXml(blocks, compileOpts);
+        const countXml = compileCountFetchXml(filter, compileOpts);
         const countResult = await webAPI.retrieveMultipleRecords(
           config.jiraObjectEntity,
           `?fetchXml=${encodeURIComponent(countXml)}`
@@ -191,9 +211,10 @@ export const App: React.FC<AppProps> = (props) => {
     setSaveError(undefined);
     setSaveMessage(undefined);
     try {
-      const rows = flattenTree(blocks);
+      const rows = flattenTree(filter);
       const writes = await saveCriteria(webAPI, config, scopeSetId, rows, existingIds);
       setSaveMessage(`Saved (${writes} change${writes === 1 ? "" : "s"}).`);
+      setConvertedNotice(false);
       await reload(); // re-read so new rows carry their Dataverse ids
     } catch (e) {
       setSaveError((e as Error).message ?? String(e));
@@ -208,6 +229,9 @@ export const App: React.FC<AppProps> = (props) => {
     return <div className="ossfbm-root ossfbm-hint">Loading criteria&hellip;</div>;
   }
 
+  const noTypes = filter.objectTypes.length === 0;
+  const noSharedAttributes = !noTypes && attributes.length === 0;
+
   return (
     <div className="ossfbm-root">
       {props.configError && <div className="ossfbm-warning">{props.configError}</div>}
@@ -217,17 +241,37 @@ export const App: React.FC<AppProps> = (props) => {
           Save the scope set record first — criteria can be built but not saved until the record exists.
         </div>
       )}
+      {convertedNotice && (
+        <div className="ossfbm-warning">
+          These criteria were saved with separate per-type filters and have been merged into one shared filter.
+          The result is broader than the original — review it before saving.
+        </div>
+      )}
 
-      {blocks.map((b, i) => (
-        <React.Fragment key={b.id}>
-          {i > 0 && <div className="ossfbm-or-separator">OR</div>}
-          <TypeBlockCard
-            block={b}
-            index={i}
-            config={config}
+      <TypeSelector
+        available={config.objectTypes}
+        selected={filter.objectTypes}
+        disabled={saving}
+        onToggle={onToggleType}
+      />
+
+      {noTypes ? (
+        <div className="ossfbm-card ossfbm-hint">Select one or more source object types above to add conditions.</div>
+      ) : (
+        <div className="ossfbm-card">
+          {noSharedAttributes && (
+            <div className="ossfbm-warning">
+              The selected object types have no filterable attributes in common, so no condition can apply to all of
+              them. Remove a type, or filter them as separate scope sets.
+            </div>
+          )}
+          <GroupPanel
+            group={filter.root}
+            attributes={attributes}
+            resolveAttribute={resolveAttribute}
+            gapTypesFor={gapTypesFor}
             disabled={saving}
-            onSetType={onSetType}
-            onRemoveBlock={onRemoveBlock}
+            isRoot={true}
             onSetLogic={onSetLogic}
             onAddCondition={onAddCondition}
             onChangeCondition={onChangeCondition}
@@ -235,15 +279,16 @@ export const App: React.FC<AppProps> = (props) => {
             onAddGroup={onAddGroup}
             onDeleteGroup={onDeleteGroup}
           />
-        </React.Fragment>
-      ))}
-
-      <button type="button" className="ossfbm-add-block-btn" disabled={saving} onClick={onAddBlock}>
-        + Add another source object type
-      </button>
+        </div>
+      )}
 
       <div className="ossfbm-actions">
-        <button type="button" className="ossfbm-btn ossfbm-btn-secondary" disabled={saving} onClick={() => void onRunFilter()}>
+        <button
+          type="button"
+          className="ossfbm-btn ossfbm-btn-secondary"
+          disabled={saving}
+          onClick={() => void onRunFilter()}
+        >
           Run filter
         </button>
         <button

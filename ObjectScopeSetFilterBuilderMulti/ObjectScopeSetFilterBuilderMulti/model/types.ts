@@ -1,9 +1,15 @@
 /**
  * Criteria tree — the in-memory shape the builder UI edits.
  *
- * A scope set is a list of type blocks (OR'd together). Each block pins one
- * source object type and owns a root group. Groups nest arbitrarily and
- * combine their members with AND or OR. Conditions live inside groups.
+ * MULTI-TYPE VARIANT: a scope set has ONE list of source object types and ONE
+ * criteria tree shared across them. Groups nest arbitrarily and combine their
+ * members with AND or OR; conditions live inside groups.
+ *
+ * This differs from the original control, where each "type block" pinned a
+ * single object type and owned its own tree. The trade-off is deliberate and
+ * customer-chosen: shared attributes (Criticality, Environment) are stated once
+ * instead of per type, at the cost of not being able to express type-specific
+ * conditions ("production apps plus their Windows servers") in one scope set.
  */
 
 export type GroupLogic = "and" | "or";
@@ -38,11 +44,10 @@ export interface GroupNode {
   groups: GroupNode[];
 }
 
-export interface TypeBlockNode {
-  /** UI-only id. */
-  id: string;
-  /** Stored value of the source object type (e.g. "Application"). */
-  objectType: string;
+/** The whole filter: one shared type list plus one criteria tree. */
+export interface ScopeSetFilter {
+  /** Stored values of the selected source object types, e.g. ["Application", "Server"]. */
+  objectTypes: string[];
   root: GroupNode;
 }
 
@@ -75,3 +80,6 @@ export const OPERATORS_BY_KIND: Record<AttributeKind, Operator[]> = {
 
 /** Delimiter for multi-value ("in") values stored in the single grc_value text column. */
 export const IN_DELIMITER = ";";
+
+/** Delimiter for the object-type list stored in grc_sourceobjecttype. */
+export const TYPE_DELIMITER = ";";

@@ -5,9 +5,34 @@ installed alongside the original `GRC.ObjectScopeSetFilterBuilder` in the same
 environment, so both designs can be demoed and swapped on the form while the
 customer decides which they want.
 
-**Current state:** an exact functional copy of the original control, renamed so
-the two can coexist. The multi-type behaviour is **not yet implemented** —
-see "Planned change" below. It builds, tests, packages and deploys today.
+**Current state:** multi-type behaviour implemented. The two components are now
+visibly and functionally different — this one shows a shared type-pill selector
+at the top and a single criteria tree, where the original shows stacked
+per-type blocks.
+
+## What this variant does differently
+
+The scope set has **one shared list of source object types** and **one criteria
+tree** that applies to all of them, so a shared attribute like Criticality is
+stated once instead of repeated per type.
+
+The type pin compiles to `eq` for a single type and `in` for several:
+
+```xml
+<filter type="and">
+  <condition attribute="grc_objecttype" operator="in">
+    <value>Server</value><value>Application</value>
+  </condition>
+  <condition attribute="grc_criticality" operator="eq" value="Tier 1" />
+</filter>
+```
+
+**Known trade-off (customer-accepted):** because there is one shared tree, a
+scope set can no longer express type-specific conditions. The brief's headline
+example — *"internet-facing production applications, plus their Windows
+production servers"* — is **not representable** in this design; it needs the
+original control's per-type blocks. Returning to it is a design reversal, not a
+tweak.
 
 ## Why a separate component rather than a second solution of the same control
 
@@ -85,31 +110,44 @@ environment that is:
 }
 ```
 
-## Planned change (not yet built)
+## Behaviour decisions
 
-Each type block becomes pinnable to **several** source object types, so a shared
-attribute like Criticality is specified once for Server + Application rather
-than duplicated per block. Blocks still OR together, so per-type conditions
-("production apps **plus** their Windows servers") remain expressible.
+| Decision | Choice | Why |
+|---|---|---|
+| Type scope | One shared list for the whole scope set | Customer preference; see trade-off above |
+| Attribute picker with several types | **Intersection** only | Offering a non-applicable attribute would silently drop every object of the types that lack it — a condition never matches a null, so the user gets a smaller answer with nothing to explain it |
+| Existing conditions when a type is added | **Kept and flagged**, never deleted | Non-destructive; the original control wipes conditions on type change. Flagged rows name the types that will not match |
+| Type storage | `;`-delimited in `grc_sourceobjecttype`, **only when 2+ types** | No schema change, no migration; single-type filters write rows byte-identical to the original control's |
 
-- `TypeBlockNode.objectType: string` → `objectTypes: string[]`
-- Pinning condition `eq` → `in` with `<value>` children; a single-type block
-  keeps emitting `eq`, so existing output is unchanged
-- Attribute picker offers the **intersection** of the selected types'
-  attributes — offering a non-applicable attribute would silently drop every
-  object of the types that lack it (nulls never match)
-- `grc_sourceobjecttype` stores a `;`-delimited list **only when a block has 2+
-  types**, so single-type blocks stay byte-identical to the original control's
-  rows and round-trip between the two components cleanly
+`grc_sourceobjecttype` must be a **Text** column for 2+ types — a delimited list
+cannot be stored in a Choice column. A configured `choiceMaps.sourceObjectType`
+still applies to single-type filters.
 
-### Data compatibility between the two components
+## Data compatibility between the two components
 
-Both read and write the same `grc_filtercriterion` rows.
+Both read and write the same `grc_filtercriterion` rows, and neither is fully
+faithful to the other's model.
 
-- **Original → multi:** clean; a single type loads as a one-item list.
-- **Multi → original:** lossy for genuinely multi-type blocks —
+- **Original → this variant:** a single-block filter loads unchanged. A
+  **multi-block** filter is converted — the types are unioned and each former
+  block becomes an OR'd nested group. That is broader than the original
+  (per-block type pins are lost), so the control shows a warning and marks the
+  filter dirty so the conversion is never silently persisted.
+- **This variant → original:** lossy for genuinely multi-type filters.
   `grc_sourceobjecttype` of `"Server;Application"` matches no configured type,
   so the block loads with an empty type picker.
 
 Use separate scope set records per variant when demoing, so neither can
 misread the other's criteria.
+
+## Tests
+
+41 unit tests (`npm test`), all Dataverse-free:
+
+- **fetchXmlCompiler** — `eq` vs `in` pinning, shared conditions across types,
+  AND-root flattening, OR-root nesting (the type pin must never be OR'd away),
+  arbitrary depth, operator mapping, XML escaping, incomplete-condition skipping
+- **persistence** — type-list serialisation, group-path encoding, full
+  round-trip, row-id carry-through, and reading rows written by the original
+  per-block control including the multi-block conversion
+- **config** — intersection/union/gap helpers and `configJson` merging

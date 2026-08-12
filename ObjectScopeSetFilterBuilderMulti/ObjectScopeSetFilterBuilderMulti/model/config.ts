@@ -1,4 +1,4 @@
-import { ObjectTypeDef } from "./types";
+import { AttributeDef, ObjectTypeDef } from "./types";
 
 /**
  * All Dataverse names the control touches, in one place.
@@ -151,4 +151,54 @@ export function resolveConfig(raw: string | null | undefined): { config: Builder
 
 export function findObjectType(config: BuilderConfig, value: string): ObjectTypeDef | undefined {
   return config.objectTypes.find((t) => t.value === value);
+}
+
+/**
+ * Attributes offered when several object types are selected: the INTERSECTION,
+ * i.e. only attributes defined for every selected type.
+ *
+ * Intersection rather than union is a correctness decision, not conservatism.
+ * Offering (say) OS while Applications are in scope would silently drop every
+ * Application from the results, because a condition never matches a null — the
+ * user would get a smaller answer than they asked for with nothing to explain
+ * it. Attributes that don't apply everywhere are surfaced as warnings on
+ * existing conditions instead (see attributeGapTypes).
+ *
+ * Definitions are taken from the first selected type that declares the
+ * attribute, so labels/kinds/options stay consistent.
+ */
+export function intersectAttributes(config: BuilderConfig, objectTypes: string[]): AttributeDef[] {
+  const defs = objectTypes.map((v) => findObjectType(config, v)).filter((t): t is ObjectTypeDef => !!t);
+  if (defs.length === 0) return [];
+  const [first, ...rest] = defs;
+  return first.attributes.filter((a) =>
+    rest.every((t) => t.attributes.some((b) => b.logicalName === a.logicalName))
+  );
+}
+
+/** Union of the selected types' attributes — used to resolve loaded conditions. */
+export function unionAttributes(config: BuilderConfig, objectTypes: string[]): AttributeDef[] {
+  const seen = new Map<string, AttributeDef>();
+  objectTypes.forEach((v) => {
+    findObjectType(config, v)?.attributes.forEach((a) => {
+      if (!seen.has(a.logicalName)) seen.set(a.logicalName, a);
+    });
+  });
+  return Array.from(seen.values());
+}
+
+/**
+ * Which of the selected types do NOT have this attribute. Empty means the
+ * attribute applies everywhere; a non-empty result is what the UI warns about
+ * rather than deleting the user's condition.
+ */
+export function attributeGapTypes(
+  config: BuilderConfig,
+  objectTypes: string[],
+  logicalName: string
+): string[] {
+  return objectTypes.filter((v) => {
+    const def = findObjectType(config, v);
+    return !def || !def.attributes.some((a) => a.logicalName === logicalName);
+  });
 }

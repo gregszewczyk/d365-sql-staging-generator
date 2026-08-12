@@ -4,9 +4,14 @@ import { ConditionRow } from "./ConditionRow";
 
 export interface GroupPanelProps {
   group: GroupNode;
+  /** Attributes offered in pickers: intersection of the selected types. */
   attributes: AttributeDef[];
+  /** Resolves an attribute's definition even when it is outside the intersection. */
+  resolveAttribute: (logicalName: string) => AttributeDef | undefined;
+  /** Selected types lacking the given attribute (empty when it applies to all). */
+  gapTypesFor: (logicalName: string) => string[];
   disabled: boolean;
-  /** Root groups render without their own border (the block card is the frame). */
+  /** The root group renders without its own border (the card is the frame). */
   isRoot: boolean;
   onSetLogic: (groupId: string, logic: GroupLogic) => void;
   onAddCondition: (groupId: string) => void;
@@ -18,7 +23,7 @@ export interface GroupPanelProps {
 
 /** A criteria group: AND/OR toggle, condition rows, nested groups (recursive). */
 export const GroupPanel: React.FC<GroupPanelProps> = (props) => {
-  const { group, attributes, disabled, isRoot } = props;
+  const { group, attributes, resolveAttribute, gapTypesFor, disabled, isRoot } = props;
 
   const logicToggle = (
     <div className="ossfbm-logic-toggle" role="radiogroup" aria-label="Group logic">
@@ -68,6 +73,8 @@ export const GroupPanel: React.FC<GroupPanelProps> = (props) => {
           key={c.id}
           condition={c}
           attributes={attributes}
+          resolvedAttribute={c.attribute ? resolveAttribute(c.attribute) : undefined}
+          gapTypes={c.attribute ? gapTypesFor(c.attribute) : []}
           disabled={disabled}
           onChange={(patch) => props.onChangeCondition(group.id, c.id, patch)}
           onDelete={() => props.onDeleteCondition(group.id, c.id)}

@@ -10,7 +10,12 @@ import {
 
 export interface ConditionRowProps {
   condition: ConditionNode;
+  /** Attributes offered in the picker: the intersection of the selected types. */
   attributes: AttributeDef[];
+  /** Definition for the condition's current attribute, even if outside the intersection. */
+  resolvedAttribute?: AttributeDef;
+  /** Selected types that lack this condition's attribute; empty when it applies to all. */
+  gapTypes: string[];
   disabled: boolean;
   onChange: (patch: Partial<ConditionNode>) => void;
   onDelete: () => void;
@@ -18,9 +23,10 @@ export interface ConditionRowProps {
 
 /** One condition: attribute / operator / value / delete, as a 4-column grid row. */
 export const ConditionRow: React.FC<ConditionRowProps> = (props) => {
-  const { condition, attributes, disabled, onChange, onDelete } = props;
-  const attrDef = attributes.find((a) => a.logicalName === condition.attribute);
+  const { condition, attributes, resolvedAttribute, gapTypes, disabled, onChange, onDelete } = props;
+  const attrDef = resolvedAttribute;
   const operators: Operator[] = attrDef ? OPERATORS_BY_KIND[attrDef.kind] : ["eq", "ne", "like", "in", "gt", "lt"];
+  const outOfScope = gapTypes.length > 0;
 
   const onAttributeChange = (logicalName: string) => {
     const next = attributes.find((a) => a.logicalName === logicalName);
@@ -39,7 +45,7 @@ export const ConditionRow: React.FC<ConditionRowProps> = (props) => {
           className="ossfbm-input"
           type="text"
           disabled
-          placeholder="Pick an attribute"
+          placeholder="Pick an attribute first"
           aria-label="Value"
           value=""
           readOnly
@@ -105,8 +111,15 @@ export const ConditionRow: React.FC<ConditionRowProps> = (props) => {
     );
   };
 
+  // An attribute can fall outside the intersection when the user adds a type
+  // after building the condition. The condition is kept, not deleted — but it
+  // silently excludes the types that lack the attribute, so it is flagged.
+  const attributeOptions = attrDef && !attributes.some((a) => a.logicalName === attrDef.logicalName)
+    ? [...attributes, attrDef]
+    : attributes;
+
   return (
-    <div className="ossfbm-condition-row">
+    <div className={`ossfbm-condition-row ${outOfScope ? "ossfbm-condition-warn" : ""}`}>
       <select
         className="ossfbm-select"
         disabled={disabled}
@@ -115,7 +128,7 @@ export const ConditionRow: React.FC<ConditionRowProps> = (props) => {
         onChange={(e) => onAttributeChange(e.target.value)}
       >
         <option value="">Attribute...</option>
-        {attributes.map((a) => (
+        {attributeOptions.map((a) => (
           <option key={a.logicalName} value={a.logicalName}>
             {a.label}
           </option>
@@ -145,6 +158,12 @@ export const ConditionRow: React.FC<ConditionRowProps> = (props) => {
       >
         &#10005;
       </button>
+      {outOfScope && (
+        <div className="ossfbm-condition-warntext">
+          &#9888; {attrDef ? attrDef.label : condition.attribute} does not apply to {gapTypes.join(", ")} — objects of{" "}
+          {gapTypes.length === 1 ? "that type" : "those types"} will not match this condition.
+        </div>
+      )}
     </div>
   );
 };

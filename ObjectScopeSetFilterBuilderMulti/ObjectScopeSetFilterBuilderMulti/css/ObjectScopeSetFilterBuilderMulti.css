@@ -16,44 +16,75 @@
   box-sizing: border-box;
 }
 
-/* --- type block cards --- */
+/* --- shared type selector --- */
 
-.ossfbm-block {
+.ossfbm-typeselect {
   border: 1px solid #d1d1d1;
   border-left: 4px solid #0f6cbd;
   border-radius: 4px;
   background: #ffffff;
   padding: 12px;
-  margin-bottom: 4px;
+  margin-bottom: 8px;
 }
 
-.ossfbm-block-header {
+.ossfbm-typeselect-header {
   display: flex;
-  align-items: center;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+
+.ossfbm-section-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #242424;
+}
+
+.ossfbm-typeselect-pills {
+  display: flex;
+  flex-wrap: wrap;
   gap: 8px;
-  margin-bottom: 10px;
 }
 
-.ossfbm-type-pill {
+.ossfbm-typepill {
+  border: 1px solid #d1d1d1;
+  background: #ffffff;
+  color: #424242;
+  border-radius: 12px;
+  padding: 4px 14px;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.ossfbm-typepill:hover:not(:disabled) {
+  background: #f5f5f5;
+}
+
+.ossfbm-typepill-on {
   color: #ffffff;
-  background: #0f6cbd;
-  border-radius: 10px;
-  padding: 2px 10px;
-  font-size: 12px;
-  font-weight: 600;
-  white-space: nowrap;
 }
 
-.ossfbm-type-select {
-  max-width: 260px;
+.ossfbm-typepill-on:hover:not(:disabled) {
+  filter: brightness(0.92);
+  background: inherit;
 }
 
-.ossfbm-or-separator {
-  text-align: center;
-  font-weight: 600;
-  font-size: 12px;
-  color: #616161;
-  margin: 6px 0;
+.ossfbm-typepill:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* --- criteria card --- */
+
+.ossfbm-card {
+  border: 1px solid #d1d1d1;
+  border-radius: 4px;
+  background: #ffffff;
+  padding: 12px;
+  margin-bottom: 8px;
 }
 
 /* --- groups --- */
@@ -113,6 +144,23 @@
   gap: 8px;
   align-items: center;
   margin-bottom: 6px;
+}
+
+/* A condition whose attribute does not apply to every selected type: kept and
+   flagged rather than deleted, since the user may still want it. */
+.ossfbm-condition-warn {
+  background: #fff8e7;
+  border-left: 3px solid #f2c661;
+  border-radius: 3px;
+  padding: 4px 4px 4px 6px;
+  margin-left: -6px;
+}
+
+.ossfbm-condition-warntext {
+  grid-column: 1 / -1;
+  color: #684b00;
+  font-size: 11px;
+  padding: 2px 0 2px 2px;
 }
 
 .ossfbm-input,
