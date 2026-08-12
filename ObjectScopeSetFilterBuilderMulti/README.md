@@ -66,32 +66,43 @@ npm run build     # ends with "[build] Succeeded"
 npm test          # 21 tests, inherited from the original
 ```
 
-## Package as its own solution
+## Package into a solution
 
-Deliberately a second, independent solution so that only the design the
-customer picks gets promoted to test/prod:
-
-`pac solution init` takes the solution's unique name from **the folder it runs
-in** — there is no `--solution-name` argument. The original control's solution
-was created in a folder called `solution`, so this one must use a different
-folder name: same unique name would make importing this zip *update the
-original solution* rather than sit beside it.
+The solution folder is **not committed** — it is local build scaffolding that
+`pac solution init` generates, so a fresh clone or zip download will not have
+one. Create it once per working copy; it is then reusable, and source changes
+only need `npm run build` + `dotnet build`.
 
 ```bash
 # from this folder
-mkdir SolutionMulti && cd SolutionMulti
+mkdir solution && cd solution
 pac solution init --publisher-name grc --publisher-prefix grc
 pac solution add-reference --path ..
 dotnet build
 ```
 
-Unique names must be alphanumeric — no hyphens or spaces. Verify before
-importing that `SolutionMulti/src/Other/Solution.xml` contains
-`<UniqueName>SolutionMulti</UniqueName>`; editing that element (and the
-`<LocalizedName>` below it) is also a valid way to rename an already-inited
-solution folder.
+Note there is **no `--solution-name` argument**: `pac solution init` takes the
+solution's unique name from the folder it runs in. Unique names must be
+alphanumeric — no hyphens or spaces.
 
-Import `SolutionMulti/bin/Debug/SolutionMulti.zip` through make.powerapps.com. Both
+### Sharing a solution name with the original control
+
+Using `solution` for both projects means the second import *updates* the first
+solution, so both controls end up inside it. **Both still work** — components
+are identified by `namespace.constructor`, not by their solution — so this is
+fine while the two designs are being compared. The only cost is that neither
+control can then be promoted to test/prod without the other.
+
+To separate them later, init in a distinctly named folder (e.g.
+`SolutionMulti`), or edit `<UniqueName>` and `<LocalizedName>` in
+`solution/src/Other/Solution.xml` and rebuild. Check what is currently deployed
+with:
+
+```
+/api/data/v9.2/solutions?$select=uniquename,friendlyname,version&$filter=ismanaged eq false
+```
+
+Import `solution/bin/Debug/solution.zip` through make.powerapps.com. Both
 components then appear under **Get more components** on the scope set form, and
 you switch designs by changing which one is bound to the anchor column — or bind
 each to its own anchor column to show them side by side.

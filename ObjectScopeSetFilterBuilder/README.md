@@ -51,8 +51,11 @@ dotnet build   # or: msbuild /t:build /restore
 
 The solution's unique name comes from the folder `pac solution init` runs in
 (there is no `--solution-name` argument), so the above yields a solution called
-`solution`. The multi-type variant must therefore init in a *differently named*
-folder — see `../ObjectScopeSetFilterBuilderMulti/README.md`.
+`solution`. If the multi-type variant also inits in a folder called `solution`,
+the second import updates this one and both controls end up in it — they still
+work, since components are identified by `namespace.constructor`, but neither
+can then be promoted without the other. See
+`../ObjectScopeSetFilterBuilderMulti/README.md`.
 
 Import the resulting zip, then add the control to the **grc_objectscopeset**
 main form: bind it to any text column (e.g. `grc_description` or a dedicated
