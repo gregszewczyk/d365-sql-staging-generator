@@ -1,15 +1,15 @@
 /**
  * Criteria tree — the in-memory shape the builder UI edits.
  *
- * MULTI-TYPE VARIANT: a scope set has ONE list of source object types and ONE
- * criteria tree shared across them. Groups nest arbitrarily and combine their
- * members with AND or OR; conditions live inside groups.
+ * Object type is NOT special. It is an ordinary condition on the type column,
+ * combinable with AND/OR like any other attribute, so a scope set can express
+ * things neither earlier design could:
  *
- * This differs from the original control, where each "type block" pinned a
- * single object type and owned its own tree. The trade-off is deliberate and
- * customer-chosen: shared attributes (Criticality, Environment) are stated once
- * instead of per type, at the cost of not being able to express type-specific
- * conditions ("production apps plus their Windows servers") in one scope set.
+ *   (Type = Office AND Location = Germany) OR (Type = Product)
+ *
+ * This supersedes both earlier designs rather than adding to them: per-type
+ * blocks are just AND groups each containing a type condition, and a shared
+ * type list is a single `Type in (...)` condition near the root.
  */
 
 export type GroupLogic = "and" | "or";
@@ -44,10 +44,8 @@ export interface GroupNode {
   groups: GroupNode[];
 }
 
-/** The whole filter: one shared type list plus one criteria tree. */
+/** The whole filter is now just a criteria tree. */
 export interface ScopeSetFilter {
-  /** Stored values of the selected source object types, e.g. ["Application", "Server"]. */
-  objectTypes: string[];
   root: GroupNode;
 }
 
@@ -63,7 +61,7 @@ export interface AttributeDef {
 }
 
 export interface ObjectTypeDef {
-  /** Stored value used in grc_objecttype conditions and grc_sourceobjecttype. */
+  /** Stored value used in object-type conditions. */
   value: string;
   label: string;
   attributes: AttributeDef[];
@@ -81,5 +79,5 @@ export const OPERATORS_BY_KIND: Record<AttributeKind, Operator[]> = {
 /** Delimiter for multi-value ("in") values stored in the single grc_value text column. */
 export const IN_DELIMITER = ";";
 
-/** Delimiter for the object-type list stored in grc_sourceobjecttype. */
+/** Delimiter for the derived type list denormalised onto grc_sourceobjecttype. */
 export const TYPE_DELIMITER = ";";

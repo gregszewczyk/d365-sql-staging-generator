@@ -1,5 +1,7 @@
-import { buildTree, CriterionRow, flattenTree, parseTypes, serialiseTypes } from "../model/persistence";
+import { buildTree, CriterionRow, deriveTypes, flattenTree, parseTypes, serialiseTypes } from "../model/persistence";
 import { ConditionNode, GroupNode, Operator, ScopeSetFilter } from "../model/types";
+
+const TYPE = "grc_objecttype";
 
 let n = 0;
 const cond = (attribute: string, operator: Operator, value: string, criterionId?: string): ConditionNode => ({
@@ -15,10 +17,10 @@ const group = (logic: "and" | "or", conditions: ConditionNode[], groups: GroupNo
   conditions,
   groups
 });
-const filter = (objectTypes: string[], root: GroupNode): ScopeSetFilter => ({ objectTypes, root });
+const filter = (root: GroupNode): ScopeSetFilter => ({ root });
 
-/** Strip UI-only ids so filters can be compared structurally. */
-const strip = (f: ScopeSetFilter) => ({ objectTypes: f.objectTypes, root: stripGroup(f.root) });
+/** Strip UI-only ids so trees can be compared structurally. */
+const strip = (f: ScopeSetFilter) => stripGroup(f.root);
 const stripGroup = (g: GroupNode): unknown => ({
   logic: g.logic,
   conditions: g.conditions.map((c) => ({ attribute: c.attribute, operator: c.operator, value: c.value })),
@@ -26,100 +28,110 @@ const stripGroup = (g: GroupNode): unknown => ({
 });
 
 describe("type list serialisation", () => {
-  it("writes a single type as a plain value, byte-identical to the original control", () => {
+  it("round-trips single and multiple values", () => {
     expect(serialiseTypes(["Server"])).toBe("Server");
-  });
-
-  it("delimits only when there are several types", () => {
     expect(serialiseTypes(["Server", "Application"])).toBe("Server;Application");
-  });
-
-  it("parses both forms, ignoring blanks", () => {
-    expect(parseTypes("Server")).toEqual(["Server"]);
-    expect(parseTypes("Server;Application")).toEqual(["Server", "Application"]);
     expect(parseTypes("Server; ;Application")).toEqual(["Server", "Application"]);
     expect(parseTypes("")).toEqual([]);
   });
 });
 
-describe("flattenTree", () => {
-  it("stamps every row with the shared type list and encodes group paths", () => {
+describe("deriveTypes (denormalised grc_sourceobjecttype)", () => {
+  it("collects types from eq and in conditions at any depth, de-duplicated", () => {
     const f = filter(
-      ["Server", "Application"],
       group(
-        "and",
-        [cond("grc_criticality", "eq", "Tier 1"), cond("", "eq", "ignored")],
-        [group("or", [cond("grc_environment", "eq", "Production")])]
+        "or",
+        [cond(TYPE, "eq", "Product")],
+        [group("and", [cond(TYPE, "in", "Office;Product"), cond("grc_location", "eq", "DE")])]
       )
     );
-    const rows = flattenTree(f);
-    expect(rows).toHaveLength(2);
-    expect(rows[0]).toMatchObject({
-      sourceObjectType: "Server;Application",
-      attribute: "grc_criticality",
-      groupId: "0a",
-      groupLogic: "and",
-      name: "grc_criticality equals Tier 1"
-    });
-    expect(rows[1]).toMatchObject({
-      sourceObjectType: "Server;Application",
-      attribute: "grc_environment",
-      groupId: "0a.0o",
-      groupLogic: "or"
-    });
-    expect(rows[1].sequence).toBeGreaterThan(rows[0].sequence);
+    expect(deriveTypes(f, TYPE)).toEqual(["Product", "Office"]);
   });
 
-  it("writes nothing when no object type is selected", () => {
-    expect(flattenTree(filter([], group("and", [cond("grc_os", "eq", "Windows")])))).toEqual([]);
+  it("ignores negative type conditions, which say nothing about coverage", () => {
+    expect(deriveTypes(filter(group("and", [cond(TYPE, "ne", "Office")])), TYPE)).toEqual([]);
+  });
+
+  it("is empty when the filter never constrains type", () => {
+    expect(deriveTypes(filter(group("and", [cond("grc_location", "eq", "DE")])), TYPE)).toEqual([]);
+  });
+});
+
+describe("flattenTree", () => {
+  it("stores type conditions as ordinary rows and stamps the derived list on every row", () => {
+    const f = filter(
+      group(
+        "or",
+        [cond(TYPE, "eq", "Product")],
+        [group("and", [cond(TYPE, "eq", "Office"), cond("grc_location", "eq", "Germany")])]
+      )
+    );
+    const rows = flattenTree(f, TYPE);
+    expect(rows).toHaveLength(3);
+    expect(rows.every((r) => r.sourceObjectType === "Product;Office")).toBe(true);
+    expect(rows[0]).toMatchObject({ attribute: TYPE, value: "Product", groupId: "0o", groupLogic: "or" });
+    expect(rows[1]).toMatchObject({ attribute: TYPE, value: "Office", groupId: "0o.0a", groupLogic: "and" });
+    expect(rows[2]).toMatchObject({ attribute: "grc_location", value: "Germany", groupId: "0o.0a" });
+  });
+
+  it("skips conditions with no attribute", () => {
+    const rows = flattenTree(filter(group("and", [cond("", "eq", "x"), cond(TYPE, "eq", "Office")])), TYPE);
+    expect(rows).toHaveLength(1);
+  });
+
+  it("derives a name for each row", () => {
+    const rows = flattenTree(filter(group("and", [cond("grc_os", "like", "Windows")])), TYPE);
+    expect(rows[0].name).toBe("grc_os contains Windows");
   });
 });
 
 describe("buildTree / round trip", () => {
-  it("rebuilds the exact structure, types and nesting from flattened rows", () => {
+  it("round-trips the customer's example exactly", () => {
     const original = filter(
-      ["Application", "Server"],
       group(
-        "and",
-        [cond("grc_environment", "eq", "Production"), cond("grc_criticality", "eq", "Tier 1")],
-        [
-          group("or", [cond("grc_owner", "eq", "alice"), cond("grc_owner", "eq", "bob")]),
-          group("and", [cond("grc_environment", "like", "prod")])
-        ]
+        "or",
+        [cond(TYPE, "eq", "Product")],
+        [group("and", [cond(TYPE, "eq", "Office"), cond("grc_location", "eq", "Germany")])]
       )
     );
-    const { filter: rebuilt, converted } = buildTree(flattenTree(original));
+    const { filter: rebuilt, converted } = buildTree(flattenTree(original, TYPE), TYPE);
     expect(converted).toBe(false);
     expect(strip(rebuilt)).toEqual(strip(original));
   });
 
-  it("round-trips an OR root", () => {
+  it("round-trips deep nesting", () => {
     const original = filter(
-      ["Server"],
-      group("or", [cond("grc_os", "like", "Windows"), cond("grc_os", "like", "Linux")])
+      group(
+        "and",
+        [cond(TYPE, "in", "Server;Application")],
+        [
+          group("or", [cond("grc_criticality", "eq", "Tier 1"), cond("grc_criticality", "eq", "Tier 2")]),
+          group("and", [cond("grc_owner", "eq", "alice")], [group("or", [cond("grc_environment", "eq", "Test")])])
+        ]
+      )
     );
-    const { filter: rebuilt } = buildTree(flattenTree(original));
+    const { filter: rebuilt } = buildTree(flattenTree(original, TYPE), TYPE);
     expect(strip(rebuilt)).toEqual(strip(original));
   });
 
-  it("carries Dataverse row ids through to the rebuilt conditions", () => {
+  it("carries Dataverse row ids through", () => {
     const rows = flattenTree(
-      filter(["Server"], group("and", [cond("grc_os", "eq", "Windows", "11111111-1111-1111-1111-111111111111")]))
+      filter(group("and", [cond(TYPE, "eq", "Office", "11111111-1111-1111-1111-111111111111")])),
+      TYPE
     );
     expect(rows[0].id).toBe("11111111-1111-1111-1111-111111111111");
-    const { filter: rebuilt } = buildTree(rows);
+    const { filter: rebuilt } = buildTree(rows, TYPE);
     expect(rebuilt.root.conditions[0].criterionId).toBe("11111111-1111-1111-1111-111111111111");
   });
 
   it("returns an empty editable filter for no rows", () => {
-    const { filter: rebuilt, converted } = buildTree([]);
+    const { filter: rebuilt, converted } = buildTree([], TYPE);
     expect(converted).toBe(false);
-    expect(rebuilt.objectTypes).toEqual([]);
     expect(rebuilt.root.conditions).toHaveLength(1);
   });
 });
 
-describe("reading rows written by the original (per-block) control", () => {
+describe("upgrading rows saved by earlier designs", () => {
   const legacyRow = (
     sourceObjectType: string,
     attribute: string,
@@ -138,42 +150,76 @@ describe("reading rows written by the original (per-block) control", () => {
     sequence
   });
 
-  it("loads a single-block filter unchanged", () => {
-    const rows = [legacyRow("Server", "grc_os", "Windows", "0a", 10)];
-    const { filter: loaded, converted } = buildTree(rows);
-    expect(converted).toBe(false);
-    expect(loaded.objectTypes).toEqual(["Server"]);
+  it("injects a type condition for the shared-type-list shape", () => {
+    const rows = [
+      legacyRow("Server;Application", "grc_criticality", "Tier 1", "0a", 10),
+      legacyRow("Server;Application", "grc_environment", "Production", "0a", 20)
+    ];
+    const { filter: loaded, converted } = buildTree(rows, TYPE);
+    expect(converted).toBe(true);
     expect(loaded.root.logic).toBe("and");
-    expect(loaded.root.conditions[0].attribute).toBe("grc_os");
+    expect(loaded.root.conditions[0]).toMatchObject({ attribute: TYPE, operator: "in", value: "Server;Application" });
+    // Injected rows are new data, so they must not claim an existing row id.
+    expect(loaded.root.conditions[0].criterionId).toBeUndefined();
+    expect(loaded.root.conditions[1].attribute).toBe("grc_criticality");
   });
 
-  it("unions the types and ORs former blocks together, flagging the conversion", () => {
+  it("uses eq when the legacy shape had a single type", () => {
+    const rows = [legacyRow("Server", "grc_os", "Windows", "0a", 10)];
+    const { filter: loaded } = buildTree(rows, TYPE);
+    expect(loaded.root.conditions[0]).toMatchObject({ attribute: TYPE, operator: "eq", value: "Server" });
+  });
+
+  it("converts per-block rows losslessly: OR of AND groups, each keeping its own type", () => {
     const rows = [
       legacyRow("Application", "grc_environment", "Production", "0a", 10),
       legacyRow("Server", "grc_os", "Windows", "1a", 20)
     ];
-    const { filter: loaded, converted } = buildTree(rows);
+    const { filter: loaded, converted } = buildTree(rows, TYPE);
     expect(converted).toBe(true);
-    expect(loaded.objectTypes).toEqual(["Application", "Server"]);
     expect(loaded.root.logic).toBe("or");
     expect(loaded.root.groups).toHaveLength(2);
-    expect(loaded.root.groups[0].conditions[0].attribute).toBe("grc_environment");
-    expect(loaded.root.groups[1].conditions[0].attribute).toBe("grc_os");
+    expect(strip(loaded)).toEqual(
+      strip(
+        filter(
+          group(
+            "or",
+            [],
+            [
+              group("and", [cond(TYPE, "eq", "Application"), cond("grc_environment", "eq", "Production")]),
+              group("and", [cond(TYPE, "eq", "Server"), cond("grc_os", "eq", "Windows")])
+            ]
+          )
+        )
+      )
+    );
   });
 
-  it("does not duplicate a type that appeared in several blocks", () => {
+  it("wraps a legacy OR root so the injected type still constrains everything", () => {
     const rows = [
-      legacyRow("Server", "grc_os", "Windows", "0a", 10),
-      legacyRow("Server", "grc_os", "Linux", "1a", 20)
+      legacyRow("Server", "grc_os", "Windows", "0o", 10),
+      legacyRow("Server", "grc_os", "Linux", "0o", 20)
     ];
-    const { filter: loaded } = buildTree(rows);
-    expect(loaded.objectTypes).toEqual(["Server"]);
+    const { filter: loaded } = buildTree(rows, TYPE);
+    expect(loaded.root.logic).toBe("and");
+    expect(loaded.root.conditions[0].attribute).toBe(TYPE);
+    expect(loaded.root.groups[0].logic).toBe("or");
+    expect(loaded.root.groups[0].conditions).toHaveLength(2);
   });
 
-  it("tolerates a foreign groupId format by treating it as the root group", () => {
-    const rows = [legacyRow("Server", "grc_os", "Windows", "legacy-group-1", 10)];
-    const { filter: loaded, converted } = buildTree(rows);
+  it("does not inject anything when the rows already carry type conditions", () => {
+    const rows = [
+      legacyRow("Office", TYPE, "Office", "0a", 10),
+      legacyRow("Office", "grc_location", "Germany", "0a", 20)
+    ];
+    const { filter: loaded, converted } = buildTree(rows, TYPE);
     expect(converted).toBe(false);
-    expect(loaded.root.conditions[0].attribute).toBe("grc_os");
+    expect(loaded.root.conditions).toHaveLength(2);
+  });
+
+  it("tolerates a foreign groupId format", () => {
+    const rows = [legacyRow("Server", "grc_os", "Windows", "legacy-group-1", 10)];
+    const { filter: loaded } = buildTree(rows, TYPE);
+    expect(loaded.root.conditions.some((c) => c.attribute === "grc_os")).toBe(true);
   });
 });

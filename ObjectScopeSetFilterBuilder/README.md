@@ -6,12 +6,13 @@ CMDB table (`grc_jiraobject`), preview matching objects live, and persist the
 criteria as `grc_filtercriterion` rows. See `BRIEF.md` / the project brief for
 the business context.
 
-> **Note:** this is the original single-type-per-block design. A parallel
-> variant where one block can span several object types lives in
-> `../ObjectScopeSetFilterBuilderMulti/` as a separate component
-> (`GRC.ObjectScopeSetFilterBuilderMulti`) in its own solution, so both can be
-> installed at once while the customer decides. **Keep this project frozen**
-> while that decision is open — changes belong in the variant.
+> **Note:** this is the original design, where each type block pins one object
+> type. A parallel variant in `../ObjectScopeSetFilterBuilderMulti/` treats
+> object type as an ordinary condition, freely combinable with AND/OR — it is a
+> strict superset of this design and is where the customer's requirements have
+> landed. Both are installed as separate components
+> (`GRC.ObjectScopeSetFilterBuilderMulti`) so they can be compared on the form.
+> **Keep this project frozen** — changes belong in the variant.
 
 ## Layout
 

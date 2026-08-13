@@ -1,30 +1,43 @@
 /**
- * Tree <-> grc_filtercriterion rows (MULTI-TYPE VARIANT).
+ * Tree <-> grc_filtercriterion rows.
  *
  * Group encoding: grc_groupid holds a dot-separated *path* of segments, one per
  * nesting level, each segment `<index><logic>` where logic is "a" (AND) or
  * "o" (OR):
  *
- *   "0a"        -> the shared root group, AND
+ *   "0a"        -> the root group, AND
  *   "0a.1o"     -> second nested group inside the root, OR
  *   "0a.1o.0a"  -> arbitrary depth is representable
  *
  * grc_grouplogic stores the containing group's logic redundantly so rows stay
- * individually reportable. grc_sourceobjecttype holds the scope set's object
- * type list, delimited ONLY when there are 2+ types — a single-type filter
- * therefore writes rows byte-identical to the original control's, so anything
- * that can round-trip between the two components does.
+ * individually reportable.
  *
- * Rows written by the ORIGINAL control use the root segment as a per-block
- * index ("0a", "1a", ...), each block pinning its own single type. This variant
- * has one shared tree, so such data is converted on load: the types are unioned
- * and each former block becomes a nested group under an OR root. That is the
- * closest faithful shape, but it is broader than the original — hence the
- * `converted` flag, which the UI surfaces as a warning.
+ * Object type conditions are stored as ORDINARY rows (grc_attribute = the type
+ * column), because type is no longer special. grc_sourceobjecttype is kept as a
+ * denormalised convenience: every row of a scope set is stamped with the
+ * distinct types the tree references, so existing "which scope sets touch
+ * Servers?" reporting keeps working without parsing the tree.
+ *
+ * Two earlier storage shapes load losslessly, because type-as-a-condition can
+ * express both:
+ *  - per-block rows (root segment used as a block index, one type per block)
+ *    become an OR of AND groups, each with its type condition injected;
+ *  - shared-type-list rows (one delimited grc_sourceobjecttype, no type rows)
+ *    get a single type condition injected at the root.
+ * Either way the loaded tree is marked dirty so the new shape is only persisted
+ * deliberately.
  */
 
 import { BuilderConfig } from "./config";
-import { GroupLogic, GroupNode, Operator, OPERATOR_LABELS, ScopeSetFilter, TYPE_DELIMITER } from "./types";
+import {
+  ConditionNode,
+  GroupLogic,
+  GroupNode,
+  Operator,
+  OPERATOR_LABELS,
+  ScopeSetFilter,
+  TYPE_DELIMITER
+} from "./types";
 import { emptyCondition, newId } from "./treeUtils";
 
 export interface CriterionRow {
@@ -51,7 +64,7 @@ function deriveName(row: { attribute: string; operator: Operator; value: string 
   return label.length > 100 ? `${label.slice(0, 97)}...` : label;
 }
 
-/** Serialise the type list for grc_sourceobjecttype (delimited only when 2+). */
+/** Serialise the derived type list for the denormalised grc_sourceobjecttype. */
 export function serialiseTypes(objectTypes: string[]): string {
   return objectTypes.join(TYPE_DELIMITER);
 }
@@ -63,11 +76,33 @@ export function parseTypes(stored: string): string[] {
     .filter((t) => t !== "");
 }
 
+/**
+ * The distinct object types the tree references, for the denormalised column.
+ *
+ * Only positive conditions (eq / in) contribute: `Type != Office` does not tell
+ * us which types the set covers, so counting it would make the column
+ * misleading for "which scope sets touch X?" reporting.
+ */
+export function deriveTypes(filter: ScopeSetFilter, typeAttribute: string): string[] {
+  const found: string[] = [];
+  const walk = (g: GroupNode) => {
+    for (const c of g.conditions) {
+      if (c.attribute !== typeAttribute) continue;
+      if (c.operator !== "eq" && c.operator !== "in") continue;
+      parseTypes(c.value).forEach((t) => {
+        if (found.indexOf(t) < 0) found.push(t);
+      });
+    }
+    g.groups.forEach(walk);
+  };
+  walk(filter.root);
+  return found;
+}
+
 /** Flatten the filter into rows. Incomplete conditions (no attribute) are skipped. */
-export function flattenTree(filter: ScopeSetFilter): CriterionRow[] {
+export function flattenTree(filter: ScopeSetFilter, typeAttribute: string): CriterionRow[] {
   const rows: CriterionRow[] = [];
-  const types = serialiseTypes(filter.objectTypes);
-  if (filter.objectTypes.length === 0) return rows;
+  const types = serialiseTypes(deriveTypes(filter, typeAttribute));
   let seq = 0;
   const walk = (group: GroupNode, path: string) => {
     for (const c of group.conditions) {
@@ -132,29 +167,40 @@ function buildSubtree(parsed: ParsedRow[], rootSegment: string): GroupNode {
 
 export interface BuildResult {
   filter: ScopeSetFilter;
-  /** True when per-block (original-control) data was merged into one tree. */
+  /** True when rows in an earlier storage shape were upgraded on load. */
   converted: boolean;
 }
 
-/** Rebuild the filter from loaded rows. */
-export function buildTree(rows: CriterionRow[]): BuildResult {
-  const sorted = [...rows].sort((a, b) => a.sequence - b.sequence);
+function typeCondition(typeAttribute: string, types: string[]): ConditionNode {
+  return {
+    id: newId("c"),
+    // No criterionId: this is new data, created on the next save.
+    attribute: typeAttribute,
+    operator: types.length > 1 ? "in" : "eq",
+    value: serialiseTypes(types)
+  };
+}
 
-  // The type list is the union across rows: one shared list in this variant,
-  // but original-control rows carry a different single type per block.
-  const objectTypes: string[] = [];
-  sorted.forEach((r) =>
-    parseTypes(r.sourceObjectType).forEach((t) => {
-      if (!objectTypes.includes(t)) objectTypes.push(t);
-    })
-  );
+/**
+ * Rebuild the filter from loaded rows.
+ *
+ * Rows that already carry type conditions are the current shape and load
+ * verbatim. Rows without any are from an earlier design, where the type lived in
+ * grc_sourceobjecttype instead; those get an equivalent type condition injected
+ * so nothing is lost.
+ */
+export function buildTree(rows: CriterionRow[], typeAttribute: string): BuildResult {
+  const sorted = [...rows].sort((a, b) => a.sequence - b.sequence);
+  const hasTypeRows = sorted.some((r) => r.attribute === typeAttribute);
 
   const parsed: ParsedRow[] = sorted.map((row) => ({
     row,
     segments: row.groupId ? row.groupId.split(".") : []
   }));
 
-  // Bucket by root segment, preserving first-seen order.
+  // Bucket by root segment, preserving first-seen order. The earlier per-block
+  // design used the root segment as a block index, so several buckets means
+  // several former blocks.
   const buckets = new Map<string, ParsedRow[]>();
   for (const p of parsed) {
     const rootSeg = p.segments[0] && SEGMENT_RE.test(p.segments[0]) ? p.segments[0] : "0a";
@@ -165,17 +211,53 @@ export function buildTree(rows: CriterionRow[]): BuildResult {
 
   let root: GroupNode;
   let converted = false;
+
   if (buckets.size === 0) {
     root = { id: newId("g"), logic: "and", conditions: [], groups: [] };
   } else if (buckets.size === 1) {
     const [seg, bucketRows] = Array.from(buckets.entries())[0];
     root = buildSubtree(bucketRows, seg);
+    if (!hasTypeRows) {
+      // Shared-type-list shape: one type condition covers the whole tree.
+      const types = parseTypes(bucketRows[0].row.sourceObjectType);
+      if (types.length > 0) {
+        converted = true;
+        if (root.logic === "and") {
+          root.conditions.unshift(typeCondition(typeAttribute, types));
+        } else {
+          // An OR root must be nested so the type still constrains everything.
+          root = {
+            id: newId("g"),
+            logic: "and",
+            conditions: [typeCondition(typeAttribute, types)],
+            groups: [root]
+          };
+        }
+      }
+    }
   } else {
-    // Legacy per-block data: OR the former blocks together as nested groups.
+    // Per-block shape: OR the former blocks, each keeping its own type.
     converted = true;
     root = { id: newId("g"), logic: "or", conditions: [], groups: [] };
     for (const [seg, bucketRows] of buckets.entries()) {
-      root.groups.push(buildSubtree(bucketRows, seg));
+      const sub = buildSubtree(bucketRows, seg);
+      if (!hasTypeRows) {
+        const types = parseTypes(bucketRows[0].row.sourceObjectType);
+        if (types.length > 0) {
+          if (sub.logic === "and") {
+            sub.conditions.unshift(typeCondition(typeAttribute, types));
+          } else {
+            root.groups.push({
+              id: newId("g"),
+              logic: "and",
+              conditions: [typeCondition(typeAttribute, types)],
+              groups: [sub]
+            });
+            continue;
+          }
+        }
+      }
+      root.groups.push(sub);
     }
   }
 
@@ -186,7 +268,7 @@ export function buildTree(rows: CriterionRow[]): BuildResult {
   };
   ensureEditable(root);
 
-  return { filter: { objectTypes, root }, converted };
+  return { filter: { root }, converted };
 }
 
 // ---------------------------------------------------------------------------
@@ -196,10 +278,10 @@ export function buildTree(rows: CriterionRow[]): BuildResult {
 type WebApi = ComponentFramework.WebApi;
 
 /**
- * NOTE on choiceMaps.sourceObjectType: a delimited multi-type list cannot be
- * stored in a Choice column, so selecting 2+ object types requires
- * grc_sourceobjecttype to be Text. A configured map still applies to
- * single-type filters, where the stored value is one plain type.
+ * NOTE on choiceMaps.sourceObjectType: the denormalised type list can hold
+ * several delimited values, which a Choice column cannot store, so
+ * grc_sourceobjecttype must be Text once a tree references more than one type.
+ * A configured map still applies when the list is a single value.
  */
 function toStored(map: Record<string, number> | undefined, value: string): string | number {
   if (map && value in map) return map[value];

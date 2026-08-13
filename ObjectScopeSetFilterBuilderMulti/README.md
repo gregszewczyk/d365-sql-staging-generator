@@ -1,38 +1,67 @@
-# Object Scope Set Filter Builder — multi-type variant
+# Object Scope Set Filter Builder — flexible variant
 
 A **separate PCF component** (`GRC.ObjectScopeSetFilterBuilderMulti`) that can be
 installed alongside the original `GRC.ObjectScopeSetFilterBuilder` in the same
 environment, so both designs can be demoed and swapped on the form while the
 customer decides which they want.
 
-**Current state:** multi-type behaviour implemented. The two components are now
-visibly and functionally different — this one shows a shared type-pill selector
-at the top and a single criteria tree, where the original shows stacked
-per-type blocks.
+**Current state:** object type is an ordinary condition. The two components are
+functionally different — this one shows a single criteria tree in which type is
+just another attribute, where the original shows stacked per-type blocks.
 
 ## What this variant does differently
 
-The scope set has **one shared list of source object types** and **one criteria
-tree** that applies to all of them, so a shared attribute like Criticality is
-stated once instead of repeated per type.
+There is no type selector. `grc_objecttype` appears in the attribute picker
+alongside Location, Criticality and the rest, so it combines freely with AND/OR
+and nested groups. That makes filters like this expressible, which neither
+earlier design could manage:
 
-The type pin compiles to `eq` for a single type and `in` for several:
+> (Type = Office AND Location = Germany) OR (Type = Product)
 
 ```xml
-<filter type="and">
-  <condition attribute="grc_objecttype" operator="in">
-    <value>Server</value><value>Application</value>
-  </condition>
-  <condition attribute="grc_criticality" operator="eq" value="Tier 1" />
+<filter type="or">
+  <condition attribute="grc_objecttype" operator="eq" value="Product" />
+  <filter type="and">
+    <condition attribute="grc_objecttype" operator="eq" value="Office" />
+    <condition attribute="grc_location" operator="eq" value="Germany" />
+  </filter>
 </filter>
 ```
 
-**Known trade-off (customer-accepted):** because there is one shared tree, a
-scope set can no longer express type-specific conditions. The brief's headline
-example — *"internet-facing production applications, plus their Windows
-production servers"* — is **not representable** in this design; it needs the
-original control's per-type blocks. Returning to it is a design reversal, not a
-tweak.
+This **supersedes both earlier designs** rather than adding to them:
+
+| Earlier design | Expressed here as |
+|---|---|
+| Per-type blocks (original control) | an OR of AND groups, each containing its own type condition |
+| One shared type list | a single `Type in (...)` condition near the root |
+
+### Attribute scoping without a type selector
+
+The brief's rule — don't offer every attribute for every type — still holds, but
+with no global type list there is nothing obvious to scope by. The picker
+therefore **infers the type context** from the condition's position in the tree:
+walking the AND groups from the root down, any type condition found constrains
+its siblings, because within an AND group `Type = Office` means every sibling
+condition applies only to Offices. OR groups contribute nothing, since their
+members are alternatives rather than constraints.
+
+- **Constrained context** → the intersection of those types' attributes. Inside
+  a `Type = Office AND …` branch you get Office's attributes only.
+- **Unconstrained context** → the union, since no type is known yet.
+- **Contradictory context** (e.g. `Type = Server AND Type = Application`) → only
+  the type attribute, and the group says no object type can satisfy it.
+
+Each group shows which types its attributes apply to, so the inference is
+visible rather than magic. Conditions whose attribute doesn't apply to every
+type in context are flagged amber and kept, never deleted — a condition never
+matches a null, so such a filter silently excludes those objects, and saying so
+is better than hiding it.
+
+### No type condition at all
+
+A tree with no type condition matches every object type. That is legitimate, so
+it is allowed, but the control says so explicitly rather than quietly returning
+the whole CMDB.
 
 ## Why a separate component rather than a second solution of the same control
 
@@ -45,7 +74,7 @@ differs here:
 | | Original | This variant |
 |---|---|---|
 | Constructor | `ObjectScopeSetFilterBuilder` | `ObjectScopeSetFilterBuilderMulti` |
-| Display name | Object Scope Set Filter Builder | Object Scope Set Filter Builder (multi-type) |
+| Display name | Object Scope Set Filter Builder | Object Scope Set Filter Builder (flexible) |
 | Exported class | `ObjectScopeSetFilterBuilder` | `ObjectScopeSetFilterBuilderMulti` |
 | CSS file | `ObjectScopeSetFilterBuilder.css` | `ObjectScopeSetFilterBuilderMulti.css` |
 | CSS class prefix | `ossfb-` | `ossfbm-` |
@@ -63,7 +92,7 @@ participates in the collision.
 ```bash
 npm install
 npm run build     # ends with "[build] Succeeded"
-npm test          # 21 tests, inherited from the original
+npm test          # 57 tests
 ```
 
 ## Package into a solution
@@ -125,40 +154,46 @@ environment that is:
 
 | Decision | Choice | Why |
 |---|---|---|
-| Type scope | One shared list for the whole scope set | Customer preference; see trade-off above |
-| Attribute picker with several types | **Intersection** only | Offering a non-applicable attribute would silently drop every object of the types that lack it — a condition never matches a null, so the user gets a smaller answer with nothing to explain it |
-| Existing conditions when a type is added | **Kept and flagged**, never deleted | Non-destructive; the original control wipes conditions on type change. Flagged rows name the types that will not match |
-| Type storage | `;`-delimited in `grc_sourceobjecttype`, **only when 2+ types** | No schema change, no migration; single-type filters write rows byte-identical to the original control's |
+| Object type | An ordinary condition, no special casing | Lets type participate in AND/OR like any attribute; supersedes both earlier designs |
+| Attribute picker scoping | Inferred from enclosing AND context | Keeps the brief's guardrail without a global type list; sound because an AND-context type condition genuinely constrains its siblings |
+| Attribute outside context | Kept and flagged amber | Non-destructive, and names the types that will not match |
+| Untyped filter | Allowed, with a visible warning | Matching all types is a valid intent, but never a silent default |
+| `grc_sourceobjecttype` | Denormalised: distinct types the tree references, stamped on every row | Existing "which scope sets touch Servers?" reporting keeps working without parsing the tree |
 
-`grc_sourceobjecttype` must be a **Text** column for 2+ types — a delimited list
-cannot be stored in a Choice column. A configured `choiceMaps.sourceObjectType`
-still applies to single-type filters.
+Only positive (`eq` / `in`) type conditions feed the denormalised column: a
+`Type != Office` condition says nothing about which types a set covers, so
+counting it would make the column misleading.
 
-## Data compatibility between the two components
+The column must be **Text** once a tree references more than one type, since a
+delimited list cannot be stored in a Choice column.
 
-Both read and write the same `grc_filtercriterion` rows, and neither is fully
-faithful to the other's model.
+## Data compatibility
 
-- **Original → this variant:** a single-block filter loads unchanged. A
-  **multi-block** filter is converted — the types are unioned and each former
-  block becomes an OR'd nested group. That is broader than the original
-  (per-block type pins are lost), so the control shows a warning and marks the
-  filter dirty so the conversion is never silently persisted.
-- **This variant → original:** lossy for genuinely multi-type filters.
-  `grc_sourceobjecttype` of `"Server;Application"` matches no configured type,
-  so the block loads with an empty type picker.
+Both components read and write the same `grc_filtercriterion` rows.
 
-Use separate scope set records per variant when demoing, so neither can
-misread the other's criteria.
+- **Either earlier shape → this variant: lossless.** Rows carrying no type
+  condition are recognised as the older storage shape, and an equivalent type
+  condition is injected — per-block rows become an OR of AND groups each keeping
+  its own type; a shared type list becomes one `Type in (...)` condition. The
+  injected conditions are new rows, so the loaded filter is marked unsaved and a
+  notice explains why; nothing is persisted until you deliberately save.
+- **This variant → the original control:** lossy for anything the per-block
+  model cannot represent, which is most of what this design adds.
+
+Use separate scope set records per variant when comparing them.
 
 ## Tests
 
-41 unit tests (`npm test`), all Dataverse-free:
+57 unit tests (`npm test`), all Dataverse-free:
 
-- **fetchXmlCompiler** — `eq` vs `in` pinning, shared conditions across types,
-  AND-root flattening, OR-root nesting (the type pin must never be OR'd away),
-  arbitrary depth, operator mapping, XML escaping, incomplete-condition skipping
-- **persistence** — type-list serialisation, group-path encoding, full
-  round-trip, row-id carry-through, and reading rows written by the original
-  per-block control including the multi-block conversion
-- **config** — intersection/union/gap helpers and `configJson` merging
+- **fetchXmlCompiler** — the customer's `(Type = Office AND Location = Germany)
+  OR (Type = Product)` example verbatim, plus proof that both earlier designs
+  remain expressible, that the type column gets no special treatment in the XML,
+  active-condition placement for AND and OR roots, arbitrary depth, operator
+  mapping, XML escaping, and returning "" rather than an unbounded fetch
+- **persistence** — type conditions as ordinary rows, the derived type list,
+  round-trips including the customer's example, and lossless upgrades from both
+  earlier storage shapes
+- **config** — type-context inference (AND narrowing, OR ignored, intersection
+  of multiple constraints, `ne`, contradictions, incomplete conditions),
+  context-scoped attribute lists, gap detection, and `configJson` merging

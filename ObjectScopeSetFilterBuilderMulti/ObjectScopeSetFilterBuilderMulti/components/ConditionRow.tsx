@@ -1,4 +1,5 @@
 import * as React from "react";
+import { BuilderConfig, isTypeAttribute } from "../model/config";
 import {
   AttributeDef,
   ConditionNode,
@@ -10,11 +11,10 @@ import {
 
 export interface ConditionRowProps {
   condition: ConditionNode;
-  /** Attributes offered in the picker: the intersection of the selected types. */
+  config: BuilderConfig;
+  /** Attributes offered here: object type plus whatever the type context allows. */
   attributes: AttributeDef[];
-  /** Definition for the condition's current attribute, even if outside the intersection. */
-  resolvedAttribute?: AttributeDef;
-  /** Selected types that lack this condition's attribute; empty when it applies to all. */
+  /** Types in context that lack this attribute; empty when it applies throughout. */
   gapTypes: string[];
   disabled: boolean;
   onChange: (patch: Partial<ConditionNode>) => void;
@@ -23,10 +23,11 @@ export interface ConditionRowProps {
 
 /** One condition: attribute / operator / value / delete, as a 4-column grid row. */
 export const ConditionRow: React.FC<ConditionRowProps> = (props) => {
-  const { condition, attributes, resolvedAttribute, gapTypes, disabled, onChange, onDelete } = props;
-  const attrDef = resolvedAttribute;
+  const { condition, config, attributes, gapTypes, disabled, onChange, onDelete } = props;
+  const attrDef = attributes.find((a) => a.logicalName === condition.attribute);
   const operators: Operator[] = attrDef ? OPERATORS_BY_KIND[attrDef.kind] : ["eq", "ne", "like", "in", "gt", "lt"];
   const outOfScope = gapTypes.length > 0;
+  const isType = isTypeAttribute(config, condition.attribute);
 
   const onAttributeChange = (logicalName: string) => {
     const next = attributes.find((a) => a.logicalName === logicalName);
@@ -36,6 +37,35 @@ export const ConditionRow: React.FC<ConditionRowProps> = (props) => {
       operator: nextOps.includes(condition.operator) ? condition.operator : nextOps[0],
       value: ""
     });
+  };
+
+  /** Multi-select for `in`, so type lists are built by picking, not typing. */
+  const renderMultiChoice = (options: { value: string; label: string }[]) => {
+    const selected = condition.value
+      .split(IN_DELIMITER)
+      .map((v) => v.trim())
+      .filter((v) => v !== "");
+    const toggle = (v: string) => {
+      const next = selected.indexOf(v) >= 0 ? selected.filter((s) => s !== v) : [...selected, v];
+      onChange({ value: next.join(IN_DELIMITER) });
+    };
+    return (
+      <div className="ossfbm-valuepills" role="group" aria-label="Values">
+        {options.map((o) => (
+          <button
+            key={o.value}
+            type="button"
+            role="checkbox"
+            aria-checked={selected.indexOf(o.value) >= 0}
+            className={`ossfbm-valuepill ${selected.indexOf(o.value) >= 0 ? "ossfbm-valuepill-on" : ""}`}
+            disabled={disabled}
+            onClick={() => toggle(o.value)}
+          >
+            {o.label}
+          </button>
+        ))}
+      </div>
+    );
   };
 
   const renderValueEditor = () => {
@@ -53,6 +83,9 @@ export const ConditionRow: React.FC<ConditionRowProps> = (props) => {
       );
     }
     if (condition.operator === "in") {
+      // Choice-like attributes (including object type) get pills; free text keeps
+      // the delimited input.
+      if (attrDef.options && attrDef.options.length > 0) return renderMultiChoice(attrDef.options);
       return (
         <input
           className="ossfbm-input"
@@ -111,15 +144,19 @@ export const ConditionRow: React.FC<ConditionRowProps> = (props) => {
     );
   };
 
-  // An attribute can fall outside the intersection when the user adds a type
-  // after building the condition. The condition is kept, not deleted — but it
-  // silently excludes the types that lack the attribute, so it is flagged.
-  const attributeOptions = attrDef && !attributes.some((a) => a.logicalName === attrDef.logicalName)
-    ? [...attributes, attrDef]
-    : attributes;
+  // A loaded condition can reference an attribute outside the current context —
+  // keep it selectable so the user's work is never silently dropped.
+  const attributeOptions =
+    condition.attribute && !attrDef
+      ? [...attributes, { logicalName: condition.attribute, label: condition.attribute, kind: "text" as const }]
+      : attributes;
 
   return (
-    <div className={`ossfbm-condition-row ${outOfScope ? "ossfbm-condition-warn" : ""}`}>
+    <div
+      className={`ossfbm-condition-row ${outOfScope ? "ossfbm-condition-warn" : ""} ${
+        isType ? "ossfbm-condition-type" : ""
+      }`}
+    >
       <select
         className="ossfbm-select"
         disabled={disabled}

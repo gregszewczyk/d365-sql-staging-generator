@@ -2,12 +2,12 @@
  * Criteria tree -> FetchXML. Pure functions, no Dataverse dependency —
  * this is the unit-tested core of the control.
  *
- * MULTI-TYPE VARIANT shape:
- *  - one type-pinning condition covering every selected object type:
- *    `eq` for a single type, `in` with <value> children for several;
- *  - the shared root group is flattened into the pinning filter when it is AND,
- *    or nested as its own <filter type="or"> when it is ANY;
- *  - nested groups become nested <filter> elements at arbitrary depth.
+ * There is no special handling for object type: a type condition compiles the
+ * same way as any other condition, which is what lets the tree express
+ * (Type = Office AND Location = Germany) OR (Type = Product).
+ *
+ * The only injected condition is the optional active-objects filter, which is
+ * ANDed around the whole tree so it applies regardless of the root's logic.
  */
 
 import { ConditionNode, GroupNode, IN_DELIMITER, ScopeSetFilter } from "./types";
@@ -88,30 +88,30 @@ export function hasCriteria(filter: ScopeSetFilter): boolean {
   return groupChildrenXml(filter.root) !== "";
 }
 
-/** The type pin: `eq` for one type, `in` for several. */
-function typePinXml(objectTypes: string[], typeAttribute: string): string {
-  const types = objectTypes.map((t) => t.trim()).filter((t) => t !== "");
-  const attr = escapeXml(typeAttribute);
-  if (types.length === 0) return "";
-  if (types.length === 1) {
-    return `<condition attribute="${attr}" operator="eq" value="${escapeXml(types[0])}" />`;
-  }
-  const children = types.map((t) => `<value>${escapeXml(t)}</value>`).join("");
-  return `<condition attribute="${attr}" operator="in">${children}</condition>`;
+/** True when the tree constrains the object type anywhere. */
+export function hasTypeCondition(filter: ScopeSetFilter, typeAttribute: string): boolean {
+  const walk = (g: GroupNode): boolean =>
+    g.conditions.some((c) => c.attribute === typeAttribute && isConditionComplete(c)) || g.groups.some(walk);
+  return walk(filter.root);
 }
 
-/** The complete <filter> for the scope set, or "" when no object type is selected. */
+/**
+ * The complete <filter> for the scope set, or "" when the tree has no usable
+ * condition. Returning "" rather than an empty filter is deliberate: an
+ * unconstrained fetch would return the entire CMDB.
+ */
 export function compileFilterXml(filter: ScopeSetFilter, opts: CompileOptions): string {
-  const pin = typePinXml(filter.objectTypes, opts.typeAttribute);
-  if (!pin) return "";
-  const parts = [pin];
-  if (opts.activeAttribute) {
-    parts.push(`<condition attribute="${escapeXml(opts.activeAttribute)}" operator="eq" value="1" />`);
+  const children = groupChildrenXml(filter.root);
+  if (!children) return "";
+
+  if (!opts.activeAttribute) {
+    return `<filter type="${filter.root.logic}">${children}</filter>`;
   }
-  // An AND root flattens into the pinning filter; an OR root nests inside it,
-  // so the type pin is never OR'd away.
-  const inner = filter.root.logic === "and" ? groupChildrenXml(filter.root) : groupToXml(filter.root);
-  return `<filter type="and">${parts.join("")}${inner}</filter>`;
+  const active = `<condition attribute="${escapeXml(opts.activeAttribute)}" operator="eq" value="1" />`;
+  // AND roots absorb the active condition; an OR root must stay wrapped so it
+  // is not turned into an alternative to it.
+  const body = filter.root.logic === "and" ? children : `<filter type="or">${children}</filter>`;
+  return `<filter type="and">${active}${body}</filter>`;
 }
 
 /** Full preview fetch: selected columns, ordered, capped at `top`. */

@@ -16,9 +16,9 @@
   box-sizing: border-box;
 }
 
-/* --- shared type selector --- */
+/* --- criteria card --- */
 
-.ossfbm-typeselect {
+.ossfbm-card {
   border: 1px solid #d1d1d1;
   border-left: 4px solid #0f6cbd;
   border-radius: 4px;
@@ -27,12 +27,12 @@
   margin-bottom: 8px;
 }
 
-.ossfbm-typeselect-header {
+.ossfbm-cardhead {
   display: flex;
   align-items: baseline;
   gap: 10px;
   flex-wrap: wrap;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
 }
 
 .ossfbm-section-label {
@@ -41,50 +41,56 @@
   color: #242424;
 }
 
-.ossfbm-typeselect-pills {
+.ossfbm-group-headerright {
   display: flex;
-  flex-wrap: wrap;
+  align-items: center;
   gap: 8px;
 }
 
-.ossfbm-typepill {
+/* Object-type conditions carry the structural weight of the filter, so they get
+   a subtle accent to stand out from attribute conditions. */
+.ossfbm-condition-type .ossfbm-select:first-child {
+  border-left: 3px solid #0f6cbd;
+  font-weight: 600;
+}
+
+/* Pill multi-select used for `in` on choice attributes, including object type. */
+.ossfbm-valuepills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.ossfbm-valuepill {
   border: 1px solid #d1d1d1;
   background: #ffffff;
   color: #424242;
   border-radius: 12px;
-  padding: 4px 14px;
+  padding: 3px 12px;
   font-family: inherit;
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
 }
 
-.ossfbm-typepill:hover:not(:disabled) {
+.ossfbm-valuepill:hover:not(:disabled) {
   background: #f5f5f5;
 }
 
-.ossfbm-typepill-on {
+.ossfbm-valuepill-on {
+  background: #0f6cbd;
+  border-color: #0f6cbd;
   color: #ffffff;
 }
 
-.ossfbm-typepill-on:hover:not(:disabled) {
-  filter: brightness(0.92);
-  background: inherit;
+.ossfbm-valuepill-on:hover:not(:disabled) {
+  background: #115ea3;
 }
 
-.ossfbm-typepill:disabled {
+.ossfbm-valuepill:disabled {
   opacity: 0.5;
   cursor: default;
-}
-
-/* --- criteria card --- */
-
-.ossfbm-card {
-  border: 1px solid #d1d1d1;
-  border-radius: 4px;
-  background: #ffffff;
-  padding: 12px;
-  margin-bottom: 8px;
 }
 
 /* --- groups --- */
@@ -106,6 +112,8 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
   margin-bottom: 8px;
 }
 

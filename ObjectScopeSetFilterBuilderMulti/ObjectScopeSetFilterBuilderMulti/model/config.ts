@@ -1,4 +1,4 @@
-import { AttributeDef, ObjectTypeDef } from "./types";
+import { AttributeDef, GroupNode, ObjectTypeDef } from "./types";
 
 /**
  * All Dataverse names the control touches, in one place.
@@ -154,19 +154,104 @@ export function findObjectType(config: BuilderConfig, value: string): ObjectType
 }
 
 /**
- * Attributes offered when several object types are selected: the INTERSECTION,
- * i.e. only attributes defined for every selected type.
- *
- * Intersection rather than union is a correctness decision, not conservatism.
- * Offering (say) OS while Applications are in scope would silently drop every
- * Application from the results, because a condition never matches a null — the
- * user would get a smaller answer than they asked for with nothing to explain
- * it. Attributes that don't apply everywhere are surfaced as warnings on
- * existing conditions instead (see attributeGapTypes).
- *
- * Definitions are taken from the first selected type that declares the
- * attribute, so labels/kinds/options stay consistent.
+ * The object-type column presented as a normal attribute, so the picker can
+ * offer it alongside Location, Criticality and the rest. This is what makes
+ * type "just another condition".
  */
+export function typeAttributeDef(config: BuilderConfig): AttributeDef {
+  return {
+    logicalName: config.typeAttribute,
+    label: "Object type",
+    kind: "choice",
+    options: config.objectTypes.map((t) => ({ value: t.value, label: t.label }))
+  };
+}
+
+export function isTypeAttribute(config: BuilderConfig, logicalName: string): boolean {
+  return logicalName === config.typeAttribute;
+}
+
+/**
+ * The set of object types a condition can apply to, given the type conditions
+ * that AND-constrain it (see impliedTypesFromPath). `null` means unconstrained.
+ */
+export type TypeContext = string[] | null;
+
+/**
+ * Narrow a type context by one type condition.
+ *
+ * Only AND context is sound: a type condition inside an OR group is an
+ * alternative to its siblings, not a constraint on them, so callers must not
+ * feed those in here.
+ */
+function narrow(config: BuilderConfig, current: TypeContext, operator: string, value: string): TypeContext {
+  const all = config.objectTypes.map((t) => t.value);
+  const listed = value
+    .split(";")
+    .map((v) => v.trim())
+    .filter((v) => v !== "");
+  if (listed.length === 0) return current;
+
+  let allowed: string[];
+  switch (operator) {
+    case "eq":
+    case "in":
+      allowed = listed;
+      break;
+    case "ne":
+      allowed = all.filter((t) => listed.indexOf(t) < 0);
+      break;
+    default:
+      // like/gt/lt on the type column tell us nothing useful.
+      return current;
+  }
+  return current === null ? allowed : current.filter((t) => allowed.indexOf(t) >= 0);
+}
+
+/**
+ * Infer which object types are in play for conditions in the group at the end
+ * of `path` (root first, target group last).
+ *
+ * Within an AND group, a `Type = Office` condition means every sibling applies
+ * only to Offices — so walking the AND ancestors collects a sound constraint.
+ * OR groups contribute nothing, since their members are alternatives.
+ *
+ * Returns null when no type condition constrains the group, i.e. the condition
+ * could apply to any object type.
+ */
+export function impliedTypesFromPath(config: BuilderConfig, path: GroupNode[]): TypeContext {
+  let ctx: TypeContext = null;
+  for (const group of path) {
+    if (group.logic !== "and") continue;
+    for (const c of group.conditions) {
+      if (isTypeAttribute(config, c.attribute) && c.value.trim() !== "") {
+        ctx = narrow(config, ctx, c.operator, c.value);
+      }
+    }
+  }
+  return ctx;
+}
+
+/**
+ * Attributes to offer for a condition in the given type context.
+ *
+ * Constrained context -> the INTERSECTION of those types' attributes, so the
+ * picker cannot produce a condition that silently excludes part of the result.
+ * Offering (say) OS where Offices are in scope would drop every Office, because
+ * a condition never matches a null.
+ *
+ * Unconstrained context -> the union, since we cannot know which type applies;
+ * such conditions are flagged by attributeGapTypes once a type is pinned.
+ *
+ * The object-type attribute itself is always offered.
+ */
+export function attributesForContext(config: BuilderConfig, ctx: TypeContext): AttributeDef[] {
+  const attrs = ctx === null ? unionAttributes(config, config.objectTypes.map((t) => t.value))
+                             : intersectAttributes(config, ctx);
+  return [typeAttributeDef(config), ...attrs];
+}
+
+/** Intersection of the given types' attributes (empty when no type resolves). */
 export function intersectAttributes(config: BuilderConfig, objectTypes: string[]): AttributeDef[] {
   const defs = objectTypes.map((v) => findObjectType(config, v)).filter((t): t is ObjectTypeDef => !!t);
   if (defs.length === 0) return [];
@@ -176,7 +261,7 @@ export function intersectAttributes(config: BuilderConfig, objectTypes: string[]
   );
 }
 
-/** Union of the selected types' attributes — used to resolve loaded conditions. */
+/** Union of the given types' attributes, de-duplicated by logical name. */
 export function unionAttributes(config: BuilderConfig, objectTypes: string[]): AttributeDef[] {
   const seen = new Map<string, AttributeDef>();
   objectTypes.forEach((v) => {
@@ -188,16 +273,18 @@ export function unionAttributes(config: BuilderConfig, objectTypes: string[]): A
 }
 
 /**
- * Which of the selected types do NOT have this attribute. Empty means the
- * attribute applies everywhere; a non-empty result is what the UI warns about
- * rather than deleting the user's condition.
+ * Which types in the context do NOT have this attribute. Empty means it applies
+ * throughout; a non-empty result is what the UI flags rather than deleting the
+ * user's condition. Always empty for the type attribute itself, and for an
+ * unconstrained context (nothing is known to be excluded yet).
  */
 export function attributeGapTypes(
   config: BuilderConfig,
-  objectTypes: string[],
+  ctx: TypeContext,
   logicalName: string
 ): string[] {
-  return objectTypes.filter((v) => {
+  if (ctx === null || isTypeAttribute(config, logicalName)) return [];
+  return ctx.filter((v) => {
     const def = findObjectType(config, v);
     return !def || !def.attributes.some((a) => a.logicalName === logicalName);
   });

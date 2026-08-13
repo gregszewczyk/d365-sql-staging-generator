@@ -1,15 +1,22 @@
 import * as React from "react";
-import { AttributeDef, ConditionNode, GroupLogic, GroupNode } from "../model/types";
+import {
+  attributeGapTypes,
+  attributesForContext,
+  BuilderConfig,
+  impliedTypesFromPath,
+  TypeContext
+} from "../model/config";
+import { ConditionNode, GroupLogic, GroupNode } from "../model/types";
 import { ConditionRow } from "./ConditionRow";
 
 export interface GroupPanelProps {
   group: GroupNode;
-  /** Attributes offered in pickers: intersection of the selected types. */
-  attributes: AttributeDef[];
-  /** Resolves an attribute's definition even when it is outside the intersection. */
-  resolveAttribute: (logicalName: string) => AttributeDef | undefined;
-  /** Selected types lacking the given attribute (empty when it applies to all). */
-  gapTypesFor: (logicalName: string) => string[];
+  config: BuilderConfig;
+  /**
+   * Groups from the root down to (but not including) this one. Combined with
+   * this group, it is what type-context inference walks.
+   */
+  ancestors: GroupNode[];
   disabled: boolean;
   /** The root group renders without its own border (the card is the frame). */
   isRoot: boolean;
@@ -23,7 +30,18 @@ export interface GroupPanelProps {
 
 /** A criteria group: AND/OR toggle, condition rows, nested groups (recursive). */
 export const GroupPanel: React.FC<GroupPanelProps> = (props) => {
-  const { group, attributes, resolveAttribute, gapTypesFor, disabled, isRoot } = props;
+  const { group, config, ancestors, disabled, isRoot } = props;
+
+  const path = React.useMemo(() => [...ancestors, group], [ancestors, group]);
+  const ctx: TypeContext = React.useMemo(() => impliedTypesFromPath(config, path), [config, path]);
+  const attributes = React.useMemo(() => attributesForContext(config, ctx), [config, ctx]);
+
+  const contextLabel = React.useMemo(() => {
+    if (ctx === null) return null;
+    if (ctx.length === 0) return "No object type can satisfy this group's type conditions.";
+    const labels = ctx.map((v) => config.objectTypes.find((t) => t.value === v)?.label ?? v);
+    return `Attributes shown apply to ${labels.join(", ")}`;
+  }, [ctx, config]);
 
   const logicToggle = (
     <div className="ossfbm-logic-toggle" role="radiogroup" aria-label="Group logic">
@@ -54,27 +72,32 @@ export const GroupPanel: React.FC<GroupPanelProps> = (props) => {
     <div className={isRoot ? "ossfbm-group ossfbm-group-root" : "ossfbm-group ossfbm-group-nested"}>
       <div className="ossfbm-group-header">
         {logicToggle}
-        {!isRoot && (
-          <button
-            type="button"
-            className="ossfbm-icon-btn"
-            disabled={disabled}
-            title="Remove group"
-            aria-label="Remove group"
-            onClick={() => props.onDeleteGroup(group.id)}
-          >
-            &#10005;
-          </button>
-        )}
+        <div className="ossfbm-group-headerright">
+          {contextLabel && (
+            <span className={ctx && ctx.length === 0 ? "ossfbm-error" : "ossfbm-hint"}>{contextLabel}</span>
+          )}
+          {!isRoot && (
+            <button
+              type="button"
+              className="ossfbm-icon-btn"
+              disabled={disabled}
+              title="Remove group"
+              aria-label="Remove group"
+              onClick={() => props.onDeleteGroup(group.id)}
+            >
+              &#10005;
+            </button>
+          )}
+        </div>
       </div>
 
       {group.conditions.map((c) => (
         <ConditionRow
           key={c.id}
           condition={c}
+          config={config}
           attributes={attributes}
-          resolvedAttribute={c.attribute ? resolveAttribute(c.attribute) : undefined}
-          gapTypes={c.attribute ? gapTypesFor(c.attribute) : []}
+          gapTypes={c.attribute ? attributeGapTypes(config, ctx, c.attribute) : []}
           disabled={disabled}
           onChange={(patch) => props.onChangeCondition(group.id, c.id, patch)}
           onDelete={() => props.onDeleteCondition(group.id, c.id)}
@@ -82,7 +105,7 @@ export const GroupPanel: React.FC<GroupPanelProps> = (props) => {
       ))}
 
       {group.groups.map((sub) => (
-        <GroupPanel key={sub.id} {...props} group={sub} isRoot={false} />
+        <GroupPanel key={sub.id} {...props} group={sub} ancestors={path} isRoot={false} />
       ))}
 
       <div className="ossfbm-group-actions">

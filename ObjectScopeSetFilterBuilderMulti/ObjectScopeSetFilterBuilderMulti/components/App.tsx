@@ -1,25 +1,11 @@
 import * as React from "react";
-import {
-  attributeGapTypes,
-  BuilderConfig,
-  findObjectType,
-  intersectAttributes,
-  unionAttributes
-} from "../model/config";
-import { compileCountFetchXml, compileFetchXml } from "../model/fetchXmlCompiler";
+import { BuilderConfig, findObjectType } from "../model/config";
+import { compileCountFetchXml, compileFetchXml, hasTypeCondition } from "../model/fetchXmlCompiler";
 import { buildTree, flattenTree, loadCriteria, saveCriteria } from "../model/persistence";
-import {
-  emptyCondition,
-  emptyFilter,
-  emptyGroup,
-  findGroup,
-  mutateFilter,
-  removeGroup
-} from "../model/treeUtils";
+import { emptyCondition, emptyFilter, emptyGroup, findGroup, mutateFilter, removeGroup } from "../model/treeUtils";
 import { ConditionNode, GroupLogic, ScopeSetFilter } from "../model/types";
 import { PreviewPanel, PreviewState } from "./PreviewPanel";
 import { GroupPanel } from "./GroupPanel";
-import { TypeSelector } from "./TypeSelector";
 
 export interface AppProps {
   webAPI: ComponentFramework.WebApi;
@@ -57,12 +43,12 @@ export const App: React.FC<AppProps> = (props) => {
     setLoadError(undefined);
     try {
       const rows = await loadCriteria(webAPI, config, scopeSetId);
-      const { filter: loaded, converted } = buildTree(rows);
+      const { filter: loaded, converted } = buildTree(rows, config.typeAttribute);
       setFilter(rows.length > 0 ? loaded : emptyFilter());
       setExistingIds(rows.map((r) => r.id as string).filter(Boolean));
       setConvertedNotice(converted);
-      // A converted filter differs from what is stored, so it must be re-saved
-      // to take effect — surface it as unsaved work rather than silently drift.
+      // An upgraded tree contains rows that do not exist yet, so it must be
+      // saved to take effect — surface it as unsaved work rather than drift.
       setDirty(converted);
     } catch (e) {
       setLoadError((e as Error).message ?? String(e));
@@ -82,35 +68,8 @@ export const App: React.FC<AppProps> = (props) => {
     setSaveMessage(undefined);
   };
 
-  // --- attribute scoping ---------------------------------------------------
-
-  const attributes = React.useMemo(
-    () => intersectAttributes(config, filter.objectTypes),
-    [config, filter.objectTypes]
-  );
-  const allAttributes = React.useMemo(
-    () => unionAttributes(config, filter.objectTypes),
-    [config, filter.objectTypes]
-  );
-  const resolveAttribute = React.useCallback(
-    (logicalName: string) => allAttributes.find((a) => a.logicalName === logicalName),
-    [allAttributes]
-  );
-  const gapTypesFor = React.useCallback(
-    (logicalName: string) => attributeGapTypes(config, filter.objectTypes, logicalName),
-    [config, filter.objectTypes]
-  );
-
   // --- edit handlers -------------------------------------------------------
 
-  // Toggling a type never touches the conditions: narrowing the attribute
-  // intersection flags affected conditions instead of deleting the user's work.
-  const onToggleType = (value: string) =>
-    update((d) => {
-      const i = d.objectTypes.indexOf(value);
-      if (i >= 0) d.objectTypes.splice(i, 1);
-      else d.objectTypes.push(value);
-    });
   const onSetLogic = (groupId: string, logic: GroupLogic) =>
     update((d) => {
       const g = findGroup(d.root, groupId);
@@ -137,7 +96,9 @@ export const App: React.FC<AppProps> = (props) => {
   const onAddGroup = (parentGroupId: string) =>
     update((d) => {
       const g = findGroup(d.root, parentGroupId);
-      if (g) g.groups.push(emptyGroup("or"));
+      // A nested group defaults to the opposite logic of its parent, which is
+      // almost always what the user wants when they reach for one.
+      if (g) g.groups.push(emptyGroup(g.logic === "and" ? "or" : "and"));
     });
   const onDeleteGroup = (groupId: string) => update((d) => removeGroup(d.root, groupId));
 
@@ -161,7 +122,7 @@ export const App: React.FC<AppProps> = (props) => {
   const onRunFilter = async () => {
     const fetchXml = compileFetchXml(filter, compileOpts);
     if (!fetchXml) {
-      setPreview({ status: "error", rows: [], error: "Select at least one source object type first." });
+      setPreview({ status: "error", rows: [], error: "Add at least one complete condition first." });
       return;
     }
     setPreview({ status: "running", rows: [] });
@@ -211,7 +172,7 @@ export const App: React.FC<AppProps> = (props) => {
     setSaveError(undefined);
     setSaveMessage(undefined);
     try {
-      const rows = flattenTree(filter);
+      const rows = flattenTree(filter, config.typeAttribute);
       const writes = await saveCriteria(webAPI, config, scopeSetId, rows, existingIds);
       setSaveMessage(`Saved (${writes} change${writes === 1 ? "" : "s"}).`);
       setConvertedNotice(false);
@@ -229,8 +190,7 @@ export const App: React.FC<AppProps> = (props) => {
     return <div className="ossfbm-root ossfbm-hint">Loading criteria&hellip;</div>;
   }
 
-  const noTypes = filter.objectTypes.length === 0;
-  const noSharedAttributes = !noTypes && attributes.length === 0;
+  const untyped = !hasTypeCondition(filter, config.typeAttribute);
 
   return (
     <div className="ossfbm-root">
@@ -243,42 +203,37 @@ export const App: React.FC<AppProps> = (props) => {
       )}
       {convertedNotice && (
         <div className="ossfbm-warning">
-          These criteria were saved with separate per-type filters and have been merged into one shared filter.
-          The result is broader than the original — review it before saving.
+          These criteria were stored in an earlier format and have been loaded as object-type conditions. Review them
+          and save to store them in the new format.
         </div>
       )}
 
-      <TypeSelector
-        available={config.objectTypes}
-        selected={filter.objectTypes}
-        disabled={saving}
-        onToggle={onToggleType}
-      />
+      <div className="ossfbm-card">
+        <div className="ossfbm-cardhead">
+          <span className="ossfbm-section-label">Filter</span>
+          <span className="ossfbm-hint">
+            Object type is a condition like any other — combine it freely with AND / OR and nested groups.
+          </span>
+        </div>
+        <GroupPanel
+          group={filter.root}
+          config={config}
+          ancestors={[]}
+          disabled={saving}
+          isRoot={true}
+          onSetLogic={onSetLogic}
+          onAddCondition={onAddCondition}
+          onChangeCondition={onChangeCondition}
+          onDeleteCondition={onDeleteCondition}
+          onAddGroup={onAddGroup}
+          onDeleteGroup={onDeleteGroup}
+        />
+      </div>
 
-      {noTypes ? (
-        <div className="ossfbm-card ossfbm-hint">Select one or more source object types above to add conditions.</div>
-      ) : (
-        <div className="ossfbm-card">
-          {noSharedAttributes && (
-            <div className="ossfbm-warning">
-              The selected object types have no filterable attributes in common, so no condition can apply to all of
-              them. Remove a type, or filter them as separate scope sets.
-            </div>
-          )}
-          <GroupPanel
-            group={filter.root}
-            attributes={attributes}
-            resolveAttribute={resolveAttribute}
-            gapTypesFor={gapTypesFor}
-            disabled={saving}
-            isRoot={true}
-            onSetLogic={onSetLogic}
-            onAddCondition={onAddCondition}
-            onChangeCondition={onChangeCondition}
-            onDeleteCondition={onDeleteCondition}
-            onAddGroup={onAddGroup}
-            onDeleteGroup={onDeleteGroup}
-          />
+      {untyped && (
+        <div className="ossfbm-warning">
+          No object type condition — this filter will match objects of every type. Add an Object type condition to
+          narrow it.
         </div>
       )}
 

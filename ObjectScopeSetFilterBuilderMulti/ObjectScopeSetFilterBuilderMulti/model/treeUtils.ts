@@ -14,8 +14,8 @@ export function emptyGroup(logic: GroupLogic = "and"): GroupNode {
   return { id: newId("g"), logic, conditions: [emptyCondition()], groups: [] };
 }
 
-export function emptyFilter(objectTypes: string[] = []): ScopeSetFilter {
-  return { objectTypes, root: emptyGroup("and") };
+export function emptyFilter(): ScopeSetFilter {
+  return { root: emptyGroup("and") };
 }
 
 /** Deep-clone the filter (plain data), apply a mutator, return the clone. */
@@ -30,6 +30,20 @@ export function findGroup(root: GroupNode, groupId: string): GroupNode | undefin
   for (const g of root.groups) {
     const found = findGroup(g, groupId);
     if (found) return found;
+  }
+  return undefined;
+}
+
+/**
+ * The chain of groups from the root down to `groupId` inclusive. This is what
+ * type-context inference walks: only AND groups on this path can constrain the
+ * object types a condition applies to.
+ */
+export function findGroupPath(root: GroupNode, groupId: string): GroupNode[] | undefined {
+  if (root.id === groupId) return [root];
+  for (const g of root.groups) {
+    const sub = findGroupPath(g, groupId);
+    if (sub) return [root, ...sub];
   }
   return undefined;
 }

@@ -3,7 +3,8 @@ import {
   compileCountFetchXml,
   compileFetchXml,
   compileFilterXml,
-  escapeXml
+  escapeXml,
+  hasTypeCondition
 } from "../model/fetchXmlCompiler";
 import { ConditionNode, GroupNode, Operator, ScopeSetFilter } from "../model/types";
 
@@ -20,7 +21,7 @@ const group = (logic: "and" | "or", conditions: ConditionNode[], groups: GroupNo
   conditions,
   groups
 });
-const filter = (objectTypes: string[], root: GroupNode): ScopeSetFilter => ({ objectTypes, root });
+const filter = (root: GroupNode): ScopeSetFilter => ({ root });
 
 const opts: CompileOptions = {
   entityName: "grc_jiraobject",
@@ -35,31 +36,59 @@ describe("escapeXml", () => {
   });
 });
 
-describe("type pinning", () => {
-  it("returns empty string when no object type is selected", () => {
-    expect(compileFilterXml(filter([], group("and", [cond("grc_os", "eq", "x")])), opts)).toBe("");
-  });
-
-  it("uses eq for a single type, matching the original control's output", () => {
-    expect(compileFilterXml(filter(["Server"], group("and", [])), opts)).toBe(
-      `<filter type="and"><condition attribute="grc_objecttype" operator="eq" value="Server" /></filter>`
+describe("object type as an ordinary condition", () => {
+  // The requirement that drove this design, verbatim from the customer:
+  //   (Type = Office AND Location = Germany) OR (Type = Product)
+  it("expresses (Type = Office AND Location = Germany) OR (Type = Product)", () => {
+    const f = filter(
+      group(
+        "or",
+        [cond("grc_objecttype", "eq", "Product")],
+        [group("and", [cond("grc_objecttype", "eq", "Office"), cond("grc_location", "eq", "Germany")])]
+      )
     );
-  });
-
-  it("uses in with <value> children for several types", () => {
-    expect(compileFilterXml(filter(["Server", "Application"], group("and", [])), opts)).toBe(
-      `<filter type="and">` +
-        `<condition attribute="grc_objecttype" operator="in">` +
-        `<value>Server</value><value>Application</value>` +
-        `</condition>` +
+    expect(compileFilterXml(f, opts)).toBe(
+      `<filter type="or">` +
+        `<condition attribute="grc_objecttype" operator="eq" value="Product" />` +
+        `<filter type="and">` +
+        `<condition attribute="grc_objecttype" operator="eq" value="Office" />` +
+        `<condition attribute="grc_location" operator="eq" value="Germany" />` +
+        `</filter>` +
         `</filter>`
     );
   });
 
-  it("applies shared conditions once across all selected types", () => {
+  it("still expresses the old per-type-block design (OR of AND groups)", () => {
     const f = filter(
-      ["Server", "Application"],
-      group("and", [cond("grc_criticality", "eq", "Tier 1"), cond("grc_environment", "eq", "Production")])
+      group(
+        "or",
+        [],
+        [
+          group("and", [cond("grc_objecttype", "eq", "Application"), cond("grc_environment", "eq", "Production")]),
+          group("and", [cond("grc_objecttype", "eq", "Server"), cond("grc_os", "like", "Windows")])
+        ]
+      )
+    );
+    expect(compileFilterXml(f, opts)).toBe(
+      `<filter type="or">` +
+        `<filter type="and">` +
+        `<condition attribute="grc_objecttype" operator="eq" value="Application" />` +
+        `<condition attribute="grc_environment" operator="eq" value="Production" />` +
+        `</filter>` +
+        `<filter type="and">` +
+        `<condition attribute="grc_objecttype" operator="eq" value="Server" />` +
+        `<condition attribute="grc_os" operator="like" value="%Windows%" />` +
+        `</filter>` +
+        `</filter>`
+    );
+  });
+
+  it("still expresses the old shared-type-list design (type in, shared conditions)", () => {
+    const f = filter(
+      group("and", [
+        cond("grc_objecttype", "in", "Server;Application"),
+        cond("grc_criticality", "eq", "Tier 1")
+      ])
     );
     expect(compileFilterXml(f, opts)).toBe(
       `<filter type="and">` +
@@ -67,69 +96,45 @@ describe("type pinning", () => {
         `<value>Server</value><value>Application</value>` +
         `</condition>` +
         `<condition attribute="grc_criticality" operator="eq" value="Tier 1" />` +
-        `<condition attribute="grc_environment" operator="eq" value="Production" />` +
         `</filter>`
     );
   });
 
-  it("ignores blank entries in the type list", () => {
-    expect(compileFilterXml(filter(["Server", "  "], group("and", [])), opts)).toBe(
-      `<filter type="and"><condition attribute="grc_objecttype" operator="eq" value="Server" /></filter>`
-    );
-  });
-
-  it("escapes type values", () => {
-    expect(compileFilterXml(filter([`A&B`, "C"], group("and", [])), opts)).toContain(
-      `<value>A&amp;B</value><value>C</value>`
+  it("gives the type column no special treatment in the XML", () => {
+    const typed = filter(group("and", [cond("grc_objecttype", "eq", "Office")]));
+    const other = filter(group("and", [cond("grc_location", "eq", "Office")]));
+    expect(compileFilterXml(typed, opts).replace("grc_objecttype", "grc_location")).toBe(
+      compileFilterXml(other, opts)
     );
   });
 });
 
-describe("groups", () => {
-  it("flattens an AND root into the pinning filter", () => {
-    const f = filter(
-      ["Application"],
-      group(
-        "and",
-        [cond("grc_environment", "eq", "Production"), cond("grc_internetfacing", "eq", "1")],
-        [group("or", [cond("grc_criticality", "eq", "Tier 1"), cond("grc_criticality", "eq", "Tier 2")])]
-      )
-    );
-    expect(compileFilterXml(f, opts)).toBe(
-      `<filter type="and">` +
-        `<condition attribute="grc_objecttype" operator="eq" value="Application" />` +
-        `<condition attribute="grc_environment" operator="eq" value="Production" />` +
-        `<condition attribute="grc_internetfacing" operator="eq" value="1" />` +
-        `<filter type="or">` +
-        `<condition attribute="grc_criticality" operator="eq" value="Tier 1" />` +
-        `<condition attribute="grc_criticality" operator="eq" value="Tier 2" />` +
-        `</filter>` +
-        `</filter>`
-    );
+describe("hasTypeCondition", () => {
+  it("finds a type condition at any depth", () => {
+    const nested = filter(group("and", [], [group("or", [cond("grc_objecttype", "eq", "Office")])]));
+    expect(hasTypeCondition(nested, "grc_objecttype")).toBe(true);
   });
 
-  it("nests an OR root inside the pinning filter so the type pin is never OR'd away", () => {
-    const f = filter(
-      ["Server", "Application"],
-      group("or", [cond("grc_criticality", "eq", "Tier 1"), cond("grc_environment", "eq", "Production")])
-    );
-    expect(compileFilterXml(f, opts)).toBe(
-      `<filter type="and">` +
-        `<condition attribute="grc_objecttype" operator="in">` +
-        `<value>Server</value><value>Application</value>` +
-        `</condition>` +
-        `<filter type="or">` +
-        `<condition attribute="grc_criticality" operator="eq" value="Tier 1" />` +
-        `<condition attribute="grc_environment" operator="eq" value="Production" />` +
-        `</filter>` +
-        `</filter>`
-    );
+  it("is false when the tree never constrains type", () => {
+    expect(hasTypeCondition(filter(group("and", [cond("grc_location", "eq", "DE")])), "grc_objecttype")).toBe(false);
+  });
+
+  it("ignores an incomplete type condition", () => {
+    expect(hasTypeCondition(filter(group("and", [cond("grc_objecttype", "eq", "")])), "grc_objecttype")).toBe(false);
+  });
+});
+
+describe("groups", () => {
+  it("returns empty string when nothing usable is present, rather than an unbounded fetch", () => {
+    expect(compileFilterXml(filter(group("and", [])), opts)).toBe("");
+    expect(compileFilterXml(filter(group("and", [cond("grc_os", "eq", "")])), opts)).toBe("");
+    expect(compileFetchXml(filter(group("and", [])), opts)).toBe("");
   });
 
   it("supports arbitrary nesting depth", () => {
     const deep = group("and", [cond("grc_owner", "eq", "alice")]);
     const mid = group("or", [cond("grc_criticality", "eq", "Tier 1")], [deep]);
-    const f = filter(["Application"], group("and", [cond("grc_environment", "eq", "Production")], [mid]));
+    const f = filter(group("and", [cond("grc_objecttype", "eq", "Application")], [mid]));
     expect(compileFilterXml(f, opts)).toContain(
       `<filter type="or">` +
         `<condition attribute="grc_criticality" operator="eq" value="Tier 1" />` +
@@ -140,7 +145,6 @@ describe("groups", () => {
 
   it("skips incomplete conditions and empty groups", () => {
     const f = filter(
-      ["Server"],
       group(
         "and",
         [cond("", "eq", "x"), cond("grc_os", "eq", ""), cond("grc_os", "eq", "Windows")],
@@ -148,9 +152,31 @@ describe("groups", () => {
       )
     );
     expect(compileFilterXml(f, opts)).toBe(
+      `<filter type="and"><condition attribute="grc_os" operator="eq" value="Windows" /></filter>`
+    );
+  });
+});
+
+describe("active-objects condition", () => {
+  it("is absorbed into an AND root", () => {
+    const f = filter(group("and", [cond("grc_os", "eq", "Windows")]));
+    expect(compileFilterXml(f, { ...opts, activeAttribute: "grc_isactive" })).toBe(
       `<filter type="and">` +
-        `<condition attribute="grc_objecttype" operator="eq" value="Server" />` +
+        `<condition attribute="grc_isactive" operator="eq" value="1" />` +
         `<condition attribute="grc_os" operator="eq" value="Windows" />` +
+        `</filter>`
+    );
+  });
+
+  it("wraps an OR root so it cannot become an alternative to the active check", () => {
+    const f = filter(group("or", [cond("grc_objecttype", "eq", "Office"), cond("grc_objecttype", "eq", "Product")]));
+    expect(compileFilterXml(f, { ...opts, activeAttribute: "grc_isactive" })).toBe(
+      `<filter type="and">` +
+        `<condition attribute="grc_isactive" operator="eq" value="1" />` +
+        `<filter type="or">` +
+        `<condition attribute="grc_objecttype" operator="eq" value="Office" />` +
+        `<condition attribute="grc_objecttype" operator="eq" value="Product" />` +
+        `</filter>` +
         `</filter>`
     );
   });
@@ -158,64 +184,45 @@ describe("groups", () => {
 
 describe("operators", () => {
   it("maps contains to like with wildcards", () => {
-    expect(compileFilterXml(filter(["Server"], group("and", [cond("grc_os", "like", "Windows")])), opts)).toContain(
+    expect(compileFilterXml(filter(group("and", [cond("grc_os", "like", "Windows")])), opts)).toContain(
       `<condition attribute="grc_os" operator="like" value="%Windows%" />`
     );
   });
 
   it("expands in-operator values into <value> children", () => {
-    const f = filter(["Application"], group("and", [cond("grc_environment", "in", "Production; Test;")]));
-    expect(compileFilterXml(f, opts)).toContain(
+    expect(compileFilterXml(filter(group("and", [cond("grc_environment", "in", "Production; Test;")])), opts)).toContain(
       `<condition attribute="grc_environment" operator="in">` +
         `<value>Production</value><value>Test</value></condition>`
     );
   });
 
   it("escapes user values", () => {
-    const f = filter(["Application"], group("and", [cond("grc_owner", "eq", `O'Brien & <co>`)]));
-    expect(compileFilterXml(f, opts)).toContain(`value="O&apos;Brien &amp; &lt;co&gt;"`);
-  });
-
-  it("adds the active-only condition when configured", () => {
-    const f = filter(["Server"], group("and", [cond("grc_os", "eq", "Windows")]));
-    expect(compileFilterXml(f, { ...opts, activeAttribute: "grc_isactive" })).toContain(
-      `<condition attribute="grc_isactive" operator="eq" value="1" />`
+    expect(compileFilterXml(filter(group("and", [cond("grc_owner", "eq", `O'Brien & <co>`)])), opts)).toContain(
+      `value="O&apos;Brien &amp; &lt;co&gt;"`
     );
   });
 });
 
 describe("compileFetchXml", () => {
   it("wraps the filter in a capped fetch with selected attributes and an order", () => {
-    const f = filter(["Server"], group("and", [cond("grc_os", "eq", "Windows")]));
+    const f = filter(group("and", [cond("grc_objecttype", "eq", "Server")]));
     expect(compileFetchXml(f, opts)).toBe(
       `<fetch top="50"><entity name="grc_jiraobject">` +
         `<attribute name="grc_name" /><attribute name="grc_objecttype" />` +
         `<order attribute="grc_name" />` +
-        `<filter type="and">` +
-        `<condition attribute="grc_objecttype" operator="eq" value="Server" />` +
-        `<condition attribute="grc_os" operator="eq" value="Windows" />` +
-        `</filter>` +
+        `<filter type="and"><condition attribute="grc_objecttype" operator="eq" value="Server" /></filter>` +
         `</entity></fetch>`
     );
-  });
-
-  it("returns empty string when there is nothing to query", () => {
-    expect(compileFetchXml(filter([], group("and", [])), opts)).toBe("");
   });
 });
 
 describe("compileCountFetchXml", () => {
   it("builds an aggregate count query over the same filter", () => {
-    const f = filter(["Server", "Application"], group("and", [cond("grc_criticality", "eq", "Tier 1")]));
+    const f = filter(group("and", [cond("grc_objecttype", "eq", "Server")]));
     expect(compileCountFetchXml(f, opts)).toBe(
       `<fetch aggregate="true"><entity name="grc_jiraobject">` +
         `<attribute name="grc_jiraobjectid" alias="matchcount" aggregate="count" />` +
-        `<filter type="and">` +
-        `<condition attribute="grc_objecttype" operator="in">` +
-        `<value>Server</value><value>Application</value>` +
-        `</condition>` +
-        `<condition attribute="grc_criticality" operator="eq" value="Tier 1" />` +
-        `</filter>` +
+        `<filter type="and"><condition attribute="grc_objecttype" operator="eq" value="Server" /></filter>` +
         `</entity></fetch>`
     );
   });
