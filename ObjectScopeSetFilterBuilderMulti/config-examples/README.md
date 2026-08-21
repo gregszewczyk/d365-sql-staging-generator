@@ -26,6 +26,19 @@ The only genuine differences:
 - **Total / Active Licenses** — only ever populated on Infrastructure rows
 - **Internal order number** — 20% of Plugin/App vs 2–3% elsewhere
 
+## Every name the preview touches must be set explicitly
+
+The preview query selects the primary name, the type column and the deep-link
+column on **every** run, so a wrong or non-existent name there fails the whole
+preview with *"The specified field does not exist in Microsoft Dynamics 365"* —
+even when the condition you typed is perfectly valid. The error names no column,
+so it is easy to misread as a problem with the condition.
+
+This export has no Jira deep-link column, hence `"objectUrlAttribute": null`,
+which drops it from the query. Point it at Login Link or Link to Documentation
+instead if clickable preview rows are wanted. `activeAttribute` is `null` for
+the same reason — no active/retired flag exists in the export.
+
 ## Two things to fix before this config is right
 
 **1. Logical names are assumed.** The export carries Jira display names, not

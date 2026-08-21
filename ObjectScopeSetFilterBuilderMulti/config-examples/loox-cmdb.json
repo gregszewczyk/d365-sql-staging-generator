@@ -1,6 +1,9 @@
 {
+  "jiraObjectEntity": "grc_jiraobject",
+  "jiraObjectPrimaryName": "grc_name",
   "typeAttribute": "grc_systemtype",
   "activeAttribute": null,
+  "objectUrlAttribute": null,
   "criterionColumns": {
     "scopeSetLookup": "grc_objectscopesetid",
     "scopeSetNav": "grc_ObjectScopeSetID",
