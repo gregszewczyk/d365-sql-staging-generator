@@ -1,0 +1,588 @@
+{
+  "typeAttribute": "grc_systemtype",
+  "activeAttribute": null,
+  "criterionColumns": {
+    "scopeSetLookup": "grc_objectscopesetid",
+    "scopeSetNav": "grc_ObjectScopeSetID",
+    "scopeSetEntitySet": "grc_objectscopesets"
+  },
+  "objectTypes": [
+    {
+      "value": "Stand Alone",
+      "label": "Stand Alone",
+      "attributes": [
+        {
+          "logicalName": "grc_status",
+          "label": "Status",
+          "kind": "choice",
+          "options": [
+            {
+              "value": "16",
+              "label": "Status 16 (604 rows)"
+            },
+            {
+              "value": "15",
+              "label": "Status 15 (343 rows)"
+            },
+            {
+              "value": "20",
+              "label": "Status 20 (158 rows)"
+            },
+            {
+              "value": "14",
+              "label": "Status 14 (12 rows)"
+            },
+            {
+              "value": "6",
+              "label": "Status 6 (5 rows)"
+            },
+            {
+              "value": "21",
+              "label": "Status 21 (1 row)"
+            }
+          ]
+        },
+        {
+          "logicalName": "grc_accesstype",
+          "label": "Access type",
+          "kind": "choice",
+          "options": [
+            {
+              "value": "Specific Department",
+              "label": "Specific Department"
+            },
+            {
+              "value": "Available For Everyone",
+              "label": "Available For Everyone"
+            },
+            {
+              "value": "Pre-Installed",
+              "label": "Pre-Installed"
+            },
+            {
+              "value": "Available In Software Center",
+              "label": "Available In Software Center"
+            }
+          ]
+        },
+        {
+          "logicalName": "grc_displayedinappstore",
+          "label": "Displayed in App Store",
+          "kind": "boolean"
+        },
+        {
+          "logicalName": "grc_applicationenvironment",
+          "label": "Application Environment",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_application",
+          "label": "Application",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_vendor",
+          "label": "Vendor",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_manufacturer",
+          "label": "Manufacturer",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_supplier",
+          "label": "Supplier",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_responsible",
+          "label": "Responsible",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_accountable",
+          "label": "Accountable",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_accountableunit",
+          "label": "Accountable Unit",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_invoicecostcenter",
+          "label": "Invoice cost center",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_name",
+          "label": "Name",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_description",
+          "label": "Description",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_appid",
+          "label": "App-ID",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_contract",
+          "label": "Contract",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_license",
+          "label": "License",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_wheregetaccess",
+          "label": "Where get access",
+          "kind": "choice",
+          "options": [
+            {
+              "value": "Contact",
+              "label": "Contact"
+            },
+            {
+              "value": "URL",
+              "label": "URL"
+            },
+            {
+              "value": "Other",
+              "label": "Other"
+            }
+          ]
+        },
+        {
+          "logicalName": "grc_needapprove",
+          "label": "Need approve",
+          "kind": "boolean"
+        },
+        {
+          "logicalName": "grc_costperyear",
+          "label": "Cost per year",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_lastsurveyed",
+          "label": "Last Surveyed",
+          "kind": "datetime"
+        },
+        {
+          "logicalName": "grc_updated",
+          "label": "Updated",
+          "kind": "datetime"
+        },
+        {
+          "logicalName": "grc_created",
+          "label": "Created",
+          "kind": "datetime"
+        },
+        {
+          "logicalName": "grc_lastsyncloox",
+          "label": "Last sync LooX",
+          "kind": "datetime"
+        },
+        {
+          "logicalName": "grc_parentapp",
+          "label": "Parent App",
+          "kind": "text"
+        }
+      ]
+    },
+    {
+      "value": "Plugin/App",
+      "label": "Plugin/App",
+      "attributes": [
+        {
+          "logicalName": "grc_status",
+          "label": "Status",
+          "kind": "choice",
+          "options": [
+            {
+              "value": "16",
+              "label": "Status 16 (604 rows)"
+            },
+            {
+              "value": "15",
+              "label": "Status 15 (343 rows)"
+            },
+            {
+              "value": "20",
+              "label": "Status 20 (158 rows)"
+            },
+            {
+              "value": "14",
+              "label": "Status 14 (12 rows)"
+            },
+            {
+              "value": "6",
+              "label": "Status 6 (5 rows)"
+            },
+            {
+              "value": "21",
+              "label": "Status 21 (1 row)"
+            }
+          ]
+        },
+        {
+          "logicalName": "grc_accesstype",
+          "label": "Access type",
+          "kind": "choice",
+          "options": [
+            {
+              "value": "Specific Department",
+              "label": "Specific Department"
+            },
+            {
+              "value": "Available For Everyone",
+              "label": "Available For Everyone"
+            },
+            {
+              "value": "Pre-Installed",
+              "label": "Pre-Installed"
+            },
+            {
+              "value": "Available In Software Center",
+              "label": "Available In Software Center"
+            }
+          ]
+        },
+        {
+          "logicalName": "grc_displayedinappstore",
+          "label": "Displayed in App Store",
+          "kind": "boolean"
+        },
+        {
+          "logicalName": "grc_applicationenvironment",
+          "label": "Application Environment",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_application",
+          "label": "Application",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_vendor",
+          "label": "Vendor",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_manufacturer",
+          "label": "Manufacturer",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_supplier",
+          "label": "Supplier",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_responsible",
+          "label": "Responsible",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_accountable",
+          "label": "Accountable",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_accountableunit",
+          "label": "Accountable Unit",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_invoicecostcenter",
+          "label": "Invoice cost center",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_name",
+          "label": "Name",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_description",
+          "label": "Description",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_appid",
+          "label": "App-ID",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_contract",
+          "label": "Contract",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_license",
+          "label": "License",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_wheregetaccess",
+          "label": "Where get access",
+          "kind": "choice",
+          "options": [
+            {
+              "value": "Contact",
+              "label": "Contact"
+            },
+            {
+              "value": "URL",
+              "label": "URL"
+            },
+            {
+              "value": "Other",
+              "label": "Other"
+            }
+          ]
+        },
+        {
+          "logicalName": "grc_needapprove",
+          "label": "Need approve",
+          "kind": "boolean"
+        },
+        {
+          "logicalName": "grc_costperyear",
+          "label": "Cost per year",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_lastsurveyed",
+          "label": "Last Surveyed",
+          "kind": "datetime"
+        },
+        {
+          "logicalName": "grc_updated",
+          "label": "Updated",
+          "kind": "datetime"
+        },
+        {
+          "logicalName": "grc_created",
+          "label": "Created",
+          "kind": "datetime"
+        },
+        {
+          "logicalName": "grc_lastsyncloox",
+          "label": "Last sync LooX",
+          "kind": "datetime"
+        },
+        {
+          "logicalName": "grc_parentapp",
+          "label": "Parent App",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_internalordernumber",
+          "label": "Internal order number",
+          "kind": "text"
+        }
+      ]
+    },
+    {
+      "value": "Infrastructure",
+      "label": "Infrastructure",
+      "attributes": [
+        {
+          "logicalName": "grc_status",
+          "label": "Status",
+          "kind": "choice",
+          "options": [
+            {
+              "value": "16",
+              "label": "Status 16 (604 rows)"
+            },
+            {
+              "value": "15",
+              "label": "Status 15 (343 rows)"
+            },
+            {
+              "value": "20",
+              "label": "Status 20 (158 rows)"
+            },
+            {
+              "value": "14",
+              "label": "Status 14 (12 rows)"
+            },
+            {
+              "value": "6",
+              "label": "Status 6 (5 rows)"
+            },
+            {
+              "value": "21",
+              "label": "Status 21 (1 row)"
+            }
+          ]
+        },
+        {
+          "logicalName": "grc_accesstype",
+          "label": "Access type",
+          "kind": "choice",
+          "options": [
+            {
+              "value": "Specific Department",
+              "label": "Specific Department"
+            },
+            {
+              "value": "Available For Everyone",
+              "label": "Available For Everyone"
+            },
+            {
+              "value": "Pre-Installed",
+              "label": "Pre-Installed"
+            },
+            {
+              "value": "Available In Software Center",
+              "label": "Available In Software Center"
+            }
+          ]
+        },
+        {
+          "logicalName": "grc_displayedinappstore",
+          "label": "Displayed in App Store",
+          "kind": "boolean"
+        },
+        {
+          "logicalName": "grc_applicationenvironment",
+          "label": "Application Environment",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_application",
+          "label": "Application",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_vendor",
+          "label": "Vendor",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_manufacturer",
+          "label": "Manufacturer",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_supplier",
+          "label": "Supplier",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_responsible",
+          "label": "Responsible",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_accountable",
+          "label": "Accountable",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_accountableunit",
+          "label": "Accountable Unit",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_invoicecostcenter",
+          "label": "Invoice cost center",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_name",
+          "label": "Name",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_description",
+          "label": "Description",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_appid",
+          "label": "App-ID",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_contract",
+          "label": "Contract",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_license",
+          "label": "License",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_wheregetaccess",
+          "label": "Where get access",
+          "kind": "choice",
+          "options": [
+            {
+              "value": "Contact",
+              "label": "Contact"
+            },
+            {
+              "value": "URL",
+              "label": "URL"
+            },
+            {
+              "value": "Other",
+              "label": "Other"
+            }
+          ]
+        },
+        {
+          "logicalName": "grc_needapprove",
+          "label": "Need approve",
+          "kind": "boolean"
+        },
+        {
+          "logicalName": "grc_costperyear",
+          "label": "Cost per year",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_lastsurveyed",
+          "label": "Last Surveyed",
+          "kind": "datetime"
+        },
+        {
+          "logicalName": "grc_updated",
+          "label": "Updated",
+          "kind": "datetime"
+        },
+        {
+          "logicalName": "grc_created",
+          "label": "Created",
+          "kind": "datetime"
+        },
+        {
+          "logicalName": "grc_lastsyncloox",
+          "label": "Last sync LooX",
+          "kind": "datetime"
+        },
+        {
+          "logicalName": "grc_totallicenses",
+          "label": "Total Licenses",
+          "kind": "number"
+        },
+        {
+          "logicalName": "grc_activelicenses",
+          "label": "Active Licenses",
+          "kind": "number"
+        }
+      ]
+    }
+  ]
+}
