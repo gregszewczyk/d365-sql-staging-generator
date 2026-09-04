@@ -365,3 +365,37 @@ export async function saveCriteria(
   }
   return writes;
 }
+
+/**
+ * Write the compiled query back onto the scope set record.
+ *
+ * The nightly evaluation job needs the query, and re-deriving it from criterion
+ * rows in Power Automate would mean reimplementing the compiler in flow
+ * expressions — so the control publishes it here instead, as the single source
+ * of truth both the preview and the job read.
+ *
+ * The stored FetchXML is deliberately UNCAPPED: the preview's top-N limit must
+ * never leak into a job that has to see every match.
+ *
+ * Failures are reported but must not fail the save — the criteria rows are the
+ * record of truth, and this column is a derived convenience. A missing column
+ * in the target environment is the most likely cause.
+ */
+export async function saveScopeSetQuery(
+  webAPI: WebApi,
+  config: BuilderConfig,
+  scopeSetId: string,
+  fetchXml: string
+): Promise<string | undefined> {
+  const data: Record<string, unknown> = {};
+  if (config.fetchXmlAttribute) data[config.fetchXmlAttribute] = fetchXml;
+  if (config.lastEvaluatedAttribute) data[config.lastEvaluatedAttribute] = new Date().toISOString();
+  if (Object.keys(data).length === 0) return undefined;
+
+  try {
+    await webAPI.updateRecord(config.scopeSetEntity, scopeSetId, data);
+    return undefined;
+  } catch (e) {
+    return (e as Error).message ?? String(e);
+  }
+}

@@ -4,6 +4,9 @@
   "typeAttribute": "grc_systemtype",
   "activeAttribute": null,
   "objectUrlAttribute": null,
+  "scopeSetEntity": "grc_objectscopeset",
+  "fetchXmlAttribute": "grc_fetchxml",
+  "lastEvaluatedAttribute": "grc_lastevaluatedon",
   "criterionColumns": {
     "scopeSetLookup": "grc_objectscopesetid",
     "scopeSetNav": "grc_ObjectScopeSetID",

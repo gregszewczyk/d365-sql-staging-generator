@@ -52,6 +52,17 @@ export interface BuilderConfig {
   criterionColumns: CriterionColumnNames;
   choiceMaps: ChoiceMaps;
 
+  /**
+   * Write-back onto the scope set record on save, so the nightly evaluation job
+   * has the query without re-deriving it from criterion rows. Set either column
+   * to null to skip writing it.
+   */
+  scopeSetEntity: string;
+  /** Multiline text column receiving the compiled, UNCAPPED FetchXML. */
+  fetchXmlAttribute: string | null;
+  /** DateTime column stamped when criteria are saved. */
+  lastEvaluatedAttribute: string | null;
+
   /** Object types offered by the builder and their filterable attributes. */
   objectTypes: ObjectTypeDef[];
 }
@@ -124,6 +135,10 @@ export const DEFAULT_CONFIG: BuilderConfig = {
     scopeSetEntitySet: "grc_objectscopesets"
   },
   choiceMaps: {},
+
+  scopeSetEntity: "grc_objectscopeset",
+  fetchXmlAttribute: "grc_fetchxml",
+  lastEvaluatedAttribute: "grc_lastevaluatedon",
 
   objectTypes: DEFAULT_OBJECT_TYPES
 };

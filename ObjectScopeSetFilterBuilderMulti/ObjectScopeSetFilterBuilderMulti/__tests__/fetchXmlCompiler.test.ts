@@ -227,3 +227,33 @@ describe("compileCountFetchXml", () => {
     );
   });
 });
+
+describe("stored query for the nightly evaluation job", () => {
+  // The preview caps at top-N so the form stays responsive. That cap must never
+  // reach the job, or scope sets would silently stop at 50 members.
+  it("omits the top cap when compiled without one", () => {
+    const f = filter(group("and", [cond("grc_objecttype", "eq", "Server")]));
+    const stored = compileFetchXml(f, { ...opts, top: undefined });
+    expect(stored.startsWith("<fetch>")).toBe(true);
+    expect(stored).not.toContain("top=");
+  });
+
+  it("keeps the preview capped", () => {
+    const f = filter(group("and", [cond("grc_objecttype", "eq", "Server")]));
+    expect(compileFetchXml(f, opts)).toContain('top="50"');
+  });
+
+  it("produces the same filter either way, so preview and job agree", () => {
+    const f = filter(
+      group(
+        "or",
+        [cond("grc_objecttype", "eq", "Product")],
+        [group("and", [cond("grc_objecttype", "eq", "Office"), cond("grc_location", "eq", "Germany")])]
+      )
+    );
+    const capped = compileFetchXml(f, opts);
+    const uncapped = compileFetchXml(f, { ...opts, top: undefined });
+    const filterOnly = (x: string) => x.slice(x.indexOf("<filter"));
+    expect(filterOnly(uncapped)).toBe(filterOnly(capped));
+  });
+});

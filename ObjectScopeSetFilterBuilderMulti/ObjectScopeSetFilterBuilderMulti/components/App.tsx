@@ -1,7 +1,7 @@
 import * as React from "react";
 import { BuilderConfig, findObjectType } from "../model/config";
 import { compileCountFetchXml, compileFetchXml, hasTypeCondition } from "../model/fetchXmlCompiler";
-import { buildTree, flattenTree, loadCriteria, saveCriteria } from "../model/persistence";
+import { buildTree, flattenTree, loadCriteria, saveCriteria, saveScopeSetQuery } from "../model/persistence";
 import { emptyCondition, emptyFilter, emptyGroup, findGroup, mutateFilter, removeGroup } from "../model/treeUtils";
 import { ConditionNode, GroupLogic, ScopeSetFilter } from "../model/types";
 import { PreviewPanel, PreviewState } from "./PreviewPanel";
@@ -30,6 +30,7 @@ export const App: React.FC<AppProps> = (props) => {
   const [saving, setSaving] = React.useState(false);
   const [saveMessage, setSaveMessage] = React.useState<string | undefined>();
   const [saveError, setSaveError] = React.useState<string | undefined>();
+  const [queryWarning, setQueryWarning] = React.useState<string | undefined>();
   const [preview, setPreview] = React.useState<PreviewState>({ status: "idle", rows: [] });
 
   const reload = React.useCallback(async () => {
@@ -171,10 +172,23 @@ export const App: React.FC<AppProps> = (props) => {
     setSaving(true);
     setSaveError(undefined);
     setSaveMessage(undefined);
+    setQueryWarning(undefined);
     try {
       const rows = flattenTree(filter, config.typeAttribute);
       const writes = await saveCriteria(webAPI, config, scopeSetId, rows, existingIds);
+
+      // Publish the compiled query for the nightly evaluation job. Uncapped:
+      // the preview's row limit must never reach a job that has to see every
+      // match. Reported but non-fatal — the criterion rows are the truth.
+      const queryError = await saveScopeSetQuery(
+        webAPI,
+        config,
+        scopeSetId,
+        compileFetchXml(filter, { ...compileOpts, top: undefined })
+      );
+
       setSaveMessage(`Saved (${writes} change${writes === 1 ? "" : "s"}).`);
+      setQueryWarning(queryError);
       setConvertedNotice(false);
       await reload(); // re-read so new rows carry their Dataverse ids
     } catch (e) {
@@ -258,6 +272,13 @@ export const App: React.FC<AppProps> = (props) => {
         {saveMessage && <span className="ossfbm-saved">{saveMessage}</span>}
         {saveError && <span className="ossfbm-error">Save failed: {saveError}</span>}
       </div>
+
+      {queryWarning && (
+        <div className="ossfbm-warning">
+          Criteria saved, but the compiled query could not be written to the scope set record, so the nightly
+          evaluation job will not see this change: {queryWarning}
+        </div>
+      )}
 
       <PreviewPanel preview={preview} cap={previewTop} />
     </div>
