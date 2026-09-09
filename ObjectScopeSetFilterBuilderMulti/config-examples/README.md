@@ -1,5 +1,69 @@
 # configJson examples
 
+| File | For |
+|---|---|
+| `current-schema.json` | **Use this now.** The `grc_jiraobject` table as it actually exists — the brief's original schema |
+| `loox-cmdb.json` | Aspirational. Derived from a LooX export whose columns are not in the environment yet |
+
+## current-schema.json
+
+Matches the deployed table: `grc_name`, `grc_jiraobjectkey`, `grc_objecttype`,
+`grc_criticality`, `grc_environment`, `grc_internetfacing`, `grc_os`,
+`grc_owner`, `grc_isactive`, `grc_objecturl`, `grc_lastsyncedon`. Logical names
+are the lowercase form of the schema names the maker portal shows
+(`grc_Criticality` → `grc_criticality`); FetchXML and the Web API want the
+lowercase form.
+
+Per-type catalogues follow the brief's intent: Internet Facing only on
+Application, OS only on Server, and Name / Jira Object Key / Environment /
+Criticality / Owner / Last Synced On shared by all three.
+
+Two things to verify, since column *types* are not visible in the column list:
+
+**Are `grc_objecttype`, `grc_criticality` and `grc_environment` Choice or Text?**
+
+```
+/api/data/v9.2/EntityDefinitions(LogicalName='grc_jiraobject')/Attributes?$select=LogicalName,AttributeType
+```
+
+`String` → the config is correct as written. `Picklist` → every `value` for that
+attribute must become the numeric option value as a string, and so must the
+`value` on each object type. Get them with:
+
+```
+/api/data/v9.2/EntityDefinitions(LogicalName='grc_jiraobject')/Attributes(LogicalName='grc_objecttype')/Microsoft.Dynamics.CRM.PicklistAttributeMetadata?$select=LogicalName&$expand=OptionSet($select=Options)
+```
+
+Note `kind` is a **UI** hint, not the storage type: `choice` renders a dropdown
+and stores whatever string you list, which is right for a Text column holding a
+fixed vocabulary. The two only have to agree on the *value*.
+
+**Do the type values match the data?**
+
+```
+/api/data/v9.2/grc_jiraobjects?$apply=groupby((grc_objecttype),aggregate($count as count))
+```
+
+If the rows say something other than Application / Server / Service, change the
+three `value` fields to match — a mismatch here is the classic "0 matches with
+data present".
+
+### On `grc_isactive`
+
+`activeAttribute` is set, so **every** query silently gains
+`grc_isactive eq 1` and retired objects never appear. That is usually right for
+GRC scoping. If someone needs to filter *for* retired objects, set
+`activeAttribute` to `null` and add
+`{ "logicalName": "grc_isactive", "label": "Is Active", "kind": "boolean" }`
+to each type instead, making it an explicit choice rather than an invisible one.
+
+### Not in the catalogue
+
+`grc_jiraobjectid` is the table's primary key, not a filterable attribute.
+`grc_objecturl` is consumed as the preview's deep link rather than offered as a
+filter.
+
+
 `loox-cmdb.json` is a catalogue derived from a real LooX export of 1,125 CMDB
 rows. Paste it into the control's **Configuration JSON** property on the form.
 

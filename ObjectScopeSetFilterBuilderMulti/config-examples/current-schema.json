@@ -1,0 +1,231 @@
+{
+  "jiraObjectEntity": "grc_jiraobject",
+  "jiraObjectPrimaryName": "grc_name",
+  "typeAttribute": "grc_objecttype",
+  "activeAttribute": "grc_isactive",
+  "objectUrlAttribute": "grc_objecturl",
+  "scopeSetEntity": "grc_objectscopeset",
+  "fetchXmlAttribute": "grc_fetchxml",
+  "lastEvaluatedAttribute": "grc_lastevaluatedon",
+  "criterionColumns": {
+    "scopeSetLookup": "grc_objectscopesetid",
+    "scopeSetNav": "grc_ObjectScopeSetID",
+    "scopeSetEntitySet": "grc_objectscopesets"
+  },
+  "objectTypes": [
+    {
+      "value": "Application",
+      "label": "Application",
+      "attributes": [
+        {
+          "logicalName": "grc_name",
+          "label": "Name",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_jiraobjectkey",
+          "label": "Jira Object Key",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_environment",
+          "label": "Environment",
+          "kind": "choice",
+          "options": [
+            {
+              "value": "Production",
+              "label": "Production"
+            },
+            {
+              "value": "Pre-Production",
+              "label": "Pre-Production"
+            },
+            {
+              "value": "Test",
+              "label": "Test"
+            },
+            {
+              "value": "Development",
+              "label": "Development"
+            }
+          ]
+        },
+        {
+          "logicalName": "grc_criticality",
+          "label": "Criticality",
+          "kind": "choice",
+          "options": [
+            {
+              "value": "Tier 1",
+              "label": "Tier 1"
+            },
+            {
+              "value": "Tier 2",
+              "label": "Tier 2"
+            },
+            {
+              "value": "Tier 3",
+              "label": "Tier 3"
+            }
+          ]
+        },
+        {
+          "logicalName": "grc_owner",
+          "label": "Owner",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_lastsyncedon",
+          "label": "Last Synced On",
+          "kind": "datetime"
+        },
+        {
+          "logicalName": "grc_internetfacing",
+          "label": "Internet Facing",
+          "kind": "boolean"
+        }
+      ]
+    },
+    {
+      "value": "Server",
+      "label": "Server",
+      "attributes": [
+        {
+          "logicalName": "grc_name",
+          "label": "Name",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_jiraobjectkey",
+          "label": "Jira Object Key",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_environment",
+          "label": "Environment",
+          "kind": "choice",
+          "options": [
+            {
+              "value": "Production",
+              "label": "Production"
+            },
+            {
+              "value": "Pre-Production",
+              "label": "Pre-Production"
+            },
+            {
+              "value": "Test",
+              "label": "Test"
+            },
+            {
+              "value": "Development",
+              "label": "Development"
+            }
+          ]
+        },
+        {
+          "logicalName": "grc_criticality",
+          "label": "Criticality",
+          "kind": "choice",
+          "options": [
+            {
+              "value": "Tier 1",
+              "label": "Tier 1"
+            },
+            {
+              "value": "Tier 2",
+              "label": "Tier 2"
+            },
+            {
+              "value": "Tier 3",
+              "label": "Tier 3"
+            }
+          ]
+        },
+        {
+          "logicalName": "grc_owner",
+          "label": "Owner",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_lastsyncedon",
+          "label": "Last Synced On",
+          "kind": "datetime"
+        },
+        {
+          "logicalName": "grc_os",
+          "label": "OS",
+          "kind": "text"
+        }
+      ]
+    },
+    {
+      "value": "Service",
+      "label": "Service",
+      "attributes": [
+        {
+          "logicalName": "grc_name",
+          "label": "Name",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_jiraobjectkey",
+          "label": "Jira Object Key",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_environment",
+          "label": "Environment",
+          "kind": "choice",
+          "options": [
+            {
+              "value": "Production",
+              "label": "Production"
+            },
+            {
+              "value": "Pre-Production",
+              "label": "Pre-Production"
+            },
+            {
+              "value": "Test",
+              "label": "Test"
+            },
+            {
+              "value": "Development",
+              "label": "Development"
+            }
+          ]
+        },
+        {
+          "logicalName": "grc_criticality",
+          "label": "Criticality",
+          "kind": "choice",
+          "options": [
+            {
+              "value": "Tier 1",
+              "label": "Tier 1"
+            },
+            {
+              "value": "Tier 2",
+              "label": "Tier 2"
+            },
+            {
+              "value": "Tier 3",
+              "label": "Tier 3"
+            }
+          ]
+        },
+        {
+          "logicalName": "grc_owner",
+          "label": "Owner",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_lastsyncedon",
+          "label": "Last Synced On",
+          "kind": "datetime"
+        }
+      ]
+    }
+  ]
+}
