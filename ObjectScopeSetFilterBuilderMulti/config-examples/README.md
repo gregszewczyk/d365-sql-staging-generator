@@ -64,8 +64,11 @@ to each type instead, making it an explicit choice rather than an invisible one.
 filter.
 
 
-`loox-cmdb.json` is a catalogue derived from a real LooX export of 1,125 CMDB
-rows. Paste it into the control's **Configuration JSON** property on the form.
+## loox-cmdb.json
+
+Derived from a real LooX export of 1,125 CMDB rows. **Not usable yet** — none of
+these columns exist in the environment. Keep it as the target shape for when the
+sync brings them across.
 
 ## What the export showed
 
