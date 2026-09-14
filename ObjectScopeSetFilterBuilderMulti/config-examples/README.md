@@ -2,7 +2,7 @@
 
 | File | For |
 |---|---|
-| `current-schema.json` | **Use this now.** The `grc_jiraobject` table as it actually exists — the brief's original schema |
+| `current-schema.json` | **Use this now.** The `grc_jiraobject` table as deployed — 32 attributes, one object type |
 | `loox-cmdb.json` | Aspirational. Derived from a LooX export whose columns are not in the environment yet |
 
 ## current-schema.json
