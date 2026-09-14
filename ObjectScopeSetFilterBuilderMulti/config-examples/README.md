@@ -7,46 +7,59 @@
 
 ## current-schema.json
 
-Matches the deployed table: `grc_name`, `grc_jiraobjectkey`, `grc_objecttype`,
-`grc_criticality`, `grc_environment`, `grc_internetfacing`, `grc_os`,
-`grc_owner`, `grc_isactive`, `grc_objecturl`, `grc_lastsyncedon`. Logical names
-are the lowercase form of the schema names the maker portal shows
-(`grc_Criticality` → `grc_criticality`); FetchXML and the Web API want the
-lowercase form.
+Matches the `grc_jiraobject` table as deployed: 32 filterable attributes under a
+single object type, **Software Catalogue** — the only type migrated so far.
 
-Per-type catalogues follow the brief's intent: Internet Facing only on
-Application, OS only on Server, and Name / Jira Object Key / Environment /
-Criticality / Owner / Last Synced On shared by all three.
+Logical names are the lowercase form of the schema names the maker portal shows
+(`grc_AccountableUnit` → `grc_accountableunit`); FetchXML and the Web API want
+the lowercase form.
 
-Two things to verify, since column *types* are not visible in the column list:
+### Only Object Type has fixed options
 
-**Are `grc_objecttype`, `grc_criticality` and `grc_environment` Choice or Text?**
+Every other attribute is free-text by request, so users type the value rather
+than pick it. That is the right call while the vocabularies are still moving —
+a stale dropdown is worse than a text box, because it looks authoritative.
+
+Three attributes are non-text because their storage type demands it:
+
+| Attribute | kind | Why |
+|---|---|---|
+| `grc_internetfacing` | `boolean` | Yes/No column — the editor writes 1 / 0 |
+| `grc_rto`, `grc_rpo` | `number` | Enables greater-than / less-than, which is the point of an objective |
+| `grc_lastsyncedon` | `datetime` | Date picker, and date comparison |
+
+If RTO/RPO turn out to be Text columns rather than Whole Number, change them to
+`text` — they will still filter, just without the numeric operators.
+
+### Attribute order is deliberate
+
+The picker renders in array order, and 32 entries is a long list. They are
+grouped by how often someone reaches for them — identity, classification, risk
+posture, technical, ownership and supply chain, relationships, sync — rather
+than alphabetically. If the list proves unwieldy in use, delete the entries
+nobody filters on; nothing breaks, and existing saved criteria that reference a
+removed attribute keep working and stay editable.
+
+### Verify the type value
+
+`Software Catalogue` must match what is actually stored, character for
+character:
 
 ```
-/api/data/v9.2/EntityDefinitions(LogicalName='grc_jiraobject')/Attributes?$select=LogicalName,AttributeType
+/api/data/v9.2/grc_jiraobjects?$apply=groupby((grc_objecttype),aggregate($count as count))
 ```
 
-`String` → the config is correct as written. `Picklist` → every `value` for that
-attribute must become the numeric option value as a string, and so must the
-`value` on each object type. Get them with:
+A mismatch here produces the classic "0 matches with data present". If
+`grc_objecttype` is a **Choice** column rather than Text, the `value` must be the
+numeric option value as a string instead of the label:
 
 ```
 /api/data/v9.2/EntityDefinitions(LogicalName='grc_jiraobject')/Attributes(LogicalName='grc_objecttype')/Microsoft.Dynamics.CRM.PicklistAttributeMetadata?$select=LogicalName&$expand=OptionSet($select=Options)
 ```
 
 Note `kind` is a **UI** hint, not the storage type: `choice` renders a dropdown
-and stores whatever string you list, which is right for a Text column holding a
-fixed vocabulary. The two only have to agree on the *value*.
-
-**Do the type values match the data?**
-
-```
-/api/data/v9.2/grc_jiraobjects?$apply=groupby((grc_objecttype),aggregate($count as count))
-```
-
-If the rows say something other than Application / Server / Service, change the
-three `value` fields to match — a mismatch here is the classic "0 matches with
-data present".
+and stores whatever string is listed, which is correct for a Text column holding
+a fixed vocabulary. The two only have to agree on the *value*.
 
 ### On `grc_isactive`
 
@@ -55,14 +68,16 @@ data present".
 GRC scoping. If someone needs to filter *for* retired objects, set
 `activeAttribute` to `null` and add
 `{ "logicalName": "grc_isactive", "label": "Is Active", "kind": "boolean" }`
-to each type instead, making it an explicit choice rather than an invisible one.
+to the attribute list instead, making it an explicit choice rather than an
+invisible one.
 
 ### Not in the catalogue
 
-`grc_jiraobjectid` is the table's primary key, not a filterable attribute.
-`grc_objecturl` is consumed as the preview's deep link rather than offered as a
-filter.
-
+- `grc_objecttype` — injected automatically as the "Object type" attribute, with
+  the object types above as its options. Listing it again would duplicate it.
+- `grc_jiraobjectid` — the table's primary key, not a filterable attribute.
+- `grc_objecturl` — consumed as the preview's deep link.
+- `grc_isactive` — applied automatically, see above.
 
 ## loox-cmdb.json
 

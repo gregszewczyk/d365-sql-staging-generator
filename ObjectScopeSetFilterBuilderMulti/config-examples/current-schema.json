@@ -14,8 +14,8 @@
   },
   "objectTypes": [
     {
-      "value": "Application",
-      "label": "Application",
+      "value": "Software Catalogue",
+      "label": "Software Catalogue",
       "attributes": [
         {
           "logicalName": "grc_name",
@@ -28,196 +28,148 @@
           "kind": "text"
         },
         {
-          "logicalName": "grc_environment",
-          "label": "Environment",
-          "kind": "choice",
-          "options": [
-            {
-              "value": "Production",
-              "label": "Production"
-            },
-            {
-              "value": "Pre-Production",
-              "label": "Pre-Production"
-            },
-            {
-              "value": "Test",
-              "label": "Test"
-            },
-            {
-              "value": "Development",
-              "label": "Development"
-            }
-          ]
+          "logicalName": "grc_appid",
+          "label": "App ID",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_description",
+          "label": "Description",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_systemtype",
+          "label": "System type",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_servicetype",
+          "label": "Service Type",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_status",
+          "label": "Status",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_accesstype",
+          "label": "Access type",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_elementtype",
+          "label": "Element Type",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_elementcategory",
+          "label": "Element Category",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_aiclassification",
+          "label": "AI classification",
+          "kind": "text"
         },
         {
           "logicalName": "grc_criticality",
           "label": "Criticality",
-          "kind": "choice",
-          "options": [
-            {
-              "value": "Tier 1",
-              "label": "Tier 1"
-            },
-            {
-              "value": "Tier 2",
-              "label": "Tier 2"
-            },
-            {
-              "value": "Tier 3",
-              "label": "Tier 3"
-            }
-          ]
-        },
-        {
-          "logicalName": "grc_owner",
-          "label": "Owner",
           "kind": "text"
         },
         {
-          "logicalName": "grc_lastsyncedon",
-          "label": "Last Synced On",
-          "kind": "datetime"
-        },
-        {
-          "logicalName": "grc_internetfacing",
-          "label": "Internet Facing",
-          "kind": "boolean"
-        }
-      ]
-    },
-    {
-      "value": "Server",
-      "label": "Server",
-      "attributes": [
-        {
-          "logicalName": "grc_name",
-          "label": "Name",
+          "logicalName": "grc_confidentiality",
+          "label": "Confidentiality",
           "kind": "text"
         },
         {
-          "logicalName": "grc_jiraobjectkey",
-          "label": "Jira Object Key",
+          "logicalName": "grc_integrity",
+          "label": "Integrity",
           "kind": "text"
+        },
+        {
+          "logicalName": "grc_availability",
+          "label": "Availability",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_authenticity",
+          "label": "Authenticity",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_rto",
+          "label": "RTO",
+          "kind": "number"
+        },
+        {
+          "logicalName": "grc_rpo",
+          "label": "RPO",
+          "kind": "number"
         },
         {
           "logicalName": "grc_environment",
           "label": "Environment",
-          "kind": "choice",
-          "options": [
-            {
-              "value": "Production",
-              "label": "Production"
-            },
-            {
-              "value": "Pre-Production",
-              "label": "Pre-Production"
-            },
-            {
-              "value": "Test",
-              "label": "Test"
-            },
-            {
-              "value": "Development",
-              "label": "Development"
-            }
-          ]
-        },
-        {
-          "logicalName": "grc_criticality",
-          "label": "Criticality",
-          "kind": "choice",
-          "options": [
-            {
-              "value": "Tier 1",
-              "label": "Tier 1"
-            },
-            {
-              "value": "Tier 2",
-              "label": "Tier 2"
-            },
-            {
-              "value": "Tier 3",
-              "label": "Tier 3"
-            }
-          ]
-        },
-        {
-          "logicalName": "grc_owner",
-          "label": "Owner",
           "kind": "text"
         },
         {
-          "logicalName": "grc_lastsyncedon",
-          "label": "Last Synced On",
-          "kind": "datetime"
+          "logicalName": "grc_applicationenvironment",
+          "label": "Application Environment",
+          "kind": "text"
         },
         {
           "logicalName": "grc_os",
           "label": "OS",
           "kind": "text"
-        }
-      ]
-    },
-    {
-      "value": "Service",
-      "label": "Service",
-      "attributes": [
-        {
-          "logicalName": "grc_name",
-          "label": "Name",
-          "kind": "text"
         },
         {
-          "logicalName": "grc_jiraobjectkey",
-          "label": "Jira Object Key",
-          "kind": "text"
-        },
-        {
-          "logicalName": "grc_environment",
-          "label": "Environment",
-          "kind": "choice",
-          "options": [
-            {
-              "value": "Production",
-              "label": "Production"
-            },
-            {
-              "value": "Pre-Production",
-              "label": "Pre-Production"
-            },
-            {
-              "value": "Test",
-              "label": "Test"
-            },
-            {
-              "value": "Development",
-              "label": "Development"
-            }
-          ]
-        },
-        {
-          "logicalName": "grc_criticality",
-          "label": "Criticality",
-          "kind": "choice",
-          "options": [
-            {
-              "value": "Tier 1",
-              "label": "Tier 1"
-            },
-            {
-              "value": "Tier 2",
-              "label": "Tier 2"
-            },
-            {
-              "value": "Tier 3",
-              "label": "Tier 3"
-            }
-          ]
+          "logicalName": "grc_internetfacing",
+          "label": "Internet Facing",
+          "kind": "boolean"
         },
         {
           "logicalName": "grc_owner",
           "label": "Owner",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_responsible",
+          "label": "Responsible",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_accountable",
+          "label": "Accountable",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_accountableunit",
+          "label": "Accountable Unit",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_vendor",
+          "label": "Vendor",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_manufacturer",
+          "label": "Manufacturer",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_supplier",
+          "label": "Supplier",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_application",
+          "label": "Application",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_parentapp",
+          "label": "Parent App",
           "kind": "text"
         },
         {
