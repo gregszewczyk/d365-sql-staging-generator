@@ -63,6 +63,14 @@ export interface BuilderConfig {
   /** DateTime column stamped when criteria are saved. */
   lastEvaluatedAttribute: string | null;
 
+  /**
+   * Run the preview automatically when a saved scope set is opened, so the
+   * record shows its current matches without a click. Once per record, never on
+   * edit — re-running as the user types would query on every keystroke.
+   * Set false where the extra two queries per form load are not wanted.
+   */
+  autoPreview: boolean;
+
   /** Object types offered by the builder and their filterable attributes. */
   objectTypes: ObjectTypeDef[];
 }
@@ -139,6 +147,7 @@ export const DEFAULT_CONFIG: BuilderConfig = {
   scopeSetEntity: "grc_objectscopeset",
   fetchXmlAttribute: "grc_fetchxml",
   lastEvaluatedAttribute: "grc_lastevaluatedon",
+  autoPreview: true,
 
   objectTypes: DEFAULT_OBJECT_TYPES
 };

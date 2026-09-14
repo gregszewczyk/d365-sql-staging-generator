@@ -165,6 +165,11 @@ describe("resolveConfig", () => {
     expect(merged.criterionColumns.scopeSetEntitySet).toBe("grc_objectscopesets");
   });
 
+  it("enables auto-preview by default and allows turning it off", () => {
+    expect(resolveConfig(null).config.autoPreview).toBe(true);
+    expect(resolveConfig(JSON.stringify({ autoPreview: false })).config.autoPreview).toBe(false);
+  });
+
   it("reports invalid JSON and keeps defaults", () => {
     const { config: fallback, error } = resolveConfig("{not json");
     expect(error).toContain("not valid JSON");

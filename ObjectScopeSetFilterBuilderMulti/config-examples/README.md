@@ -61,6 +61,18 @@ Note `kind` is a **UI** hint, not the storage type: `choice` renders a dropdown
 and stores whatever string is listed, which is correct for a Text column holding
 a fixed vocabulary. The two only have to agree on the *value*.
 
+### Auto-preview
+
+`autoPreview` defaults to **true**: opening a saved scope set runs the preview
+once automatically, so the record shows its current matches without a click.
+
+It is keyed on the record, not the filter — editing conditions does not re-run
+it, because that would query on every keystroke, and a half-typed condition is
+not worth a round trip. **Run filter** is still how you preview an edit.
+
+Set `"autoPreview": false` to turn it off where the two extra queries per form
+load are unwelcome.
+
 ### On `grc_isactive`
 
 `activeAttribute` is set, so **every** query silently gains

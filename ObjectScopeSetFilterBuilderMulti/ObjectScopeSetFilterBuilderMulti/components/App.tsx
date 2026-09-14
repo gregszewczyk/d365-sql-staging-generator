@@ -165,6 +165,21 @@ export const App: React.FC<AppProps> = (props) => {
     }
   };
 
+  // Run the preview once per record on open, so a saved scope set shows its
+  // current matches rather than an empty panel the user has to prompt.
+  //
+  // Deliberately keyed on the record id, not on the filter: re-running whenever
+  // the tree changes would fire a query on every keystroke. Editing still needs
+  // Run filter, which is also what keeps a half-typed condition from querying.
+  const autoPreviewedFor = React.useRef<string | null>(null);
+  React.useEffect(() => {
+    if (!config.autoPreview || loading || !scopeSetId) return;
+    if (autoPreviewedFor.current === scopeSetId) return;
+    if (!compileFetchXml(filter, compileOpts)) return; // no usable criteria yet
+    autoPreviewedFor.current = scopeSetId;
+    void onRunFilter();
+  }, [config.autoPreview, loading, scopeSetId, filter, compileOpts]);
+
   // --- explicit save -------------------------------------------------------
 
   const onSave = async () => {
