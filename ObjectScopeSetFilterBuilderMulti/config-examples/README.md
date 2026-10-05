@@ -2,17 +2,37 @@
 
 | File | For |
 |---|---|
-| `current-schema.json` | **Use this now.** The `grc_jiraobject` table as deployed — 32 attributes, one object type |
+| `current-schema.json` | **Use this now.** The `grc_jiraobject` table as deployed — 39 attributes, six object types |
+| `attribute-fill-by-type.sql` | SQL 4 CDS query showing which columns each object type actually populates |
 | `loox-cmdb.json` | Aspirational. Derived from a LooX export whose columns are not in the environment yet |
 
 ## current-schema.json
 
-Matches the `grc_jiraobject` table as deployed: 32 filterable attributes under a
-single object type, **Software Catalogue** — the only type migrated so far.
+Matches the `grc_jiraobject` table as deployed: 39 filterable attributes across
+six object types — **Software Catalogue**, **Business Units**, **Functional
+Unit**, **Local Unit**, **Risk Reporting Units** and **Legal Entities**.
 
 Logical names are the lowercase form of the schema names the maker portal shows
 (`grc_AccountableUnit` → `grc_accountableunit`); FetchXML and the Web API want
 the lowercase form.
+
+### Every type currently offers every attribute
+
+Which columns belong to which type is not known yet, so all six types carry the
+full list. The builder therefore behaves like a flat filter: pinning a type
+never hides an attribute, and nothing is flagged as missing for a type.
+
+The cost is that the picker will happily offer, say, OS on a Legal Entities
+filter — a condition that matches nothing, because a condition never matches a
+null. Once the data has settled, run `attribute-fill-by-type.sql` and delete
+each type's entries whose fill rate is zero. The builder's per-type behaviour
+(intersection when several types are in play, gap warnings on existing
+conditions) then starts doing its job, with no code change.
+
+The six lists are identical copies because `configJson` has no shared-list
+syntax. That makes the file long (about 17 KB minified). If the form designer
+refuses a value that size, the fix is a code change adding a shared attribute
+list, not trimming the config.
 
 ### Only Object Type has fixed options
 
@@ -33,17 +53,20 @@ If RTO/RPO turn out to be Text columns rather than Whole Number, change them to
 
 ### Attribute order is deliberate
 
-The picker renders in array order, and 32 entries is a long list. They are
+The picker renders in array order, and 39 entries is a long list. They are
 grouped by how often someone reaches for them — identity, classification, risk
-posture, technical, ownership and supply chain, relationships, sync — rather
-than alphabetically. If the list proves unwieldy in use, delete the entries
+posture, technical, organisation, ownership, supply chain, relationships, sync —
+rather than alphabetically. The columns added with the organisational types
+(Legal Entity, Company Code, Constituent Unit, Country, Representative,
+Products, Linked Objects) are assumed to be free text like the rest. If the list proves unwieldy in use, delete the entries
 nobody filters on; nothing breaks, and existing saved criteria that reference a
 removed attribute keep working and stay editable.
 
 ### Verify the type value
 
-`Software Catalogue` must match what is actually stored, character for
-character:
+Each type's `value` must match what is actually stored, character for
+character — note the list as given mixes plurals (`Business Units`) and
+singulars (`Functional Unit`), so check each one:
 
 ```
 /api/data/v9.2/grc_jiraobjects?$apply=groupby((grc_objecttype),aggregate($count as count))

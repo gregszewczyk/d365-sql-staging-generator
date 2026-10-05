@@ -128,8 +128,33 @@
           "kind": "boolean"
         },
         {
+          "logicalName": "grc_legalentity",
+          "label": "Legal Entity",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_companycode",
+          "label": "Company Code",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_constituentunit",
+          "label": "Constituent Unit",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_country",
+          "label": "Country",
+          "kind": "text"
+        },
+        {
           "logicalName": "grc_owner",
           "label": "Owner",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_representative",
+          "label": "Representative",
           "kind": "text"
         },
         {
@@ -163,6 +188,11 @@
           "kind": "text"
         },
         {
+          "logicalName": "grc_products",
+          "label": "Products",
+          "kind": "text"
+        },
+        {
           "logicalName": "grc_application",
           "label": "Application",
           "kind": "text"
@@ -170,6 +200,1016 @@
         {
           "logicalName": "grc_parentapp",
           "label": "Parent App",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_linkedobjects",
+          "label": "Linked Objects",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_lastsyncedon",
+          "label": "Last Synced On",
+          "kind": "datetime"
+        }
+      ]
+    },
+    {
+      "value": "Business Units",
+      "label": "Business Units",
+      "attributes": [
+        {
+          "logicalName": "grc_name",
+          "label": "Name",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_jiraobjectkey",
+          "label": "Jira Object Key",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_appid",
+          "label": "App ID",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_description",
+          "label": "Description",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_systemtype",
+          "label": "System type",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_servicetype",
+          "label": "Service Type",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_status",
+          "label": "Status",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_accesstype",
+          "label": "Access type",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_elementtype",
+          "label": "Element Type",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_elementcategory",
+          "label": "Element Category",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_aiclassification",
+          "label": "AI classification",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_criticality",
+          "label": "Criticality",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_confidentiality",
+          "label": "Confidentiality",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_integrity",
+          "label": "Integrity",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_availability",
+          "label": "Availability",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_authenticity",
+          "label": "Authenticity",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_rto",
+          "label": "RTO",
+          "kind": "number"
+        },
+        {
+          "logicalName": "grc_rpo",
+          "label": "RPO",
+          "kind": "number"
+        },
+        {
+          "logicalName": "grc_environment",
+          "label": "Environment",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_applicationenvironment",
+          "label": "Application Environment",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_os",
+          "label": "OS",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_internetfacing",
+          "label": "Internet Facing",
+          "kind": "boolean"
+        },
+        {
+          "logicalName": "grc_legalentity",
+          "label": "Legal Entity",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_companycode",
+          "label": "Company Code",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_constituentunit",
+          "label": "Constituent Unit",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_country",
+          "label": "Country",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_owner",
+          "label": "Owner",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_representative",
+          "label": "Representative",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_responsible",
+          "label": "Responsible",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_accountable",
+          "label": "Accountable",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_accountableunit",
+          "label": "Accountable Unit",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_vendor",
+          "label": "Vendor",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_manufacturer",
+          "label": "Manufacturer",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_supplier",
+          "label": "Supplier",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_products",
+          "label": "Products",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_application",
+          "label": "Application",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_parentapp",
+          "label": "Parent App",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_linkedobjects",
+          "label": "Linked Objects",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_lastsyncedon",
+          "label": "Last Synced On",
+          "kind": "datetime"
+        }
+      ]
+    },
+    {
+      "value": "Functional Unit",
+      "label": "Functional Unit",
+      "attributes": [
+        {
+          "logicalName": "grc_name",
+          "label": "Name",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_jiraobjectkey",
+          "label": "Jira Object Key",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_appid",
+          "label": "App ID",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_description",
+          "label": "Description",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_systemtype",
+          "label": "System type",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_servicetype",
+          "label": "Service Type",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_status",
+          "label": "Status",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_accesstype",
+          "label": "Access type",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_elementtype",
+          "label": "Element Type",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_elementcategory",
+          "label": "Element Category",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_aiclassification",
+          "label": "AI classification",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_criticality",
+          "label": "Criticality",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_confidentiality",
+          "label": "Confidentiality",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_integrity",
+          "label": "Integrity",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_availability",
+          "label": "Availability",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_authenticity",
+          "label": "Authenticity",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_rto",
+          "label": "RTO",
+          "kind": "number"
+        },
+        {
+          "logicalName": "grc_rpo",
+          "label": "RPO",
+          "kind": "number"
+        },
+        {
+          "logicalName": "grc_environment",
+          "label": "Environment",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_applicationenvironment",
+          "label": "Application Environment",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_os",
+          "label": "OS",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_internetfacing",
+          "label": "Internet Facing",
+          "kind": "boolean"
+        },
+        {
+          "logicalName": "grc_legalentity",
+          "label": "Legal Entity",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_companycode",
+          "label": "Company Code",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_constituentunit",
+          "label": "Constituent Unit",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_country",
+          "label": "Country",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_owner",
+          "label": "Owner",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_representative",
+          "label": "Representative",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_responsible",
+          "label": "Responsible",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_accountable",
+          "label": "Accountable",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_accountableunit",
+          "label": "Accountable Unit",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_vendor",
+          "label": "Vendor",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_manufacturer",
+          "label": "Manufacturer",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_supplier",
+          "label": "Supplier",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_products",
+          "label": "Products",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_application",
+          "label": "Application",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_parentapp",
+          "label": "Parent App",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_linkedobjects",
+          "label": "Linked Objects",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_lastsyncedon",
+          "label": "Last Synced On",
+          "kind": "datetime"
+        }
+      ]
+    },
+    {
+      "value": "Local Unit",
+      "label": "Local Unit",
+      "attributes": [
+        {
+          "logicalName": "grc_name",
+          "label": "Name",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_jiraobjectkey",
+          "label": "Jira Object Key",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_appid",
+          "label": "App ID",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_description",
+          "label": "Description",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_systemtype",
+          "label": "System type",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_servicetype",
+          "label": "Service Type",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_status",
+          "label": "Status",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_accesstype",
+          "label": "Access type",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_elementtype",
+          "label": "Element Type",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_elementcategory",
+          "label": "Element Category",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_aiclassification",
+          "label": "AI classification",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_criticality",
+          "label": "Criticality",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_confidentiality",
+          "label": "Confidentiality",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_integrity",
+          "label": "Integrity",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_availability",
+          "label": "Availability",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_authenticity",
+          "label": "Authenticity",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_rto",
+          "label": "RTO",
+          "kind": "number"
+        },
+        {
+          "logicalName": "grc_rpo",
+          "label": "RPO",
+          "kind": "number"
+        },
+        {
+          "logicalName": "grc_environment",
+          "label": "Environment",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_applicationenvironment",
+          "label": "Application Environment",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_os",
+          "label": "OS",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_internetfacing",
+          "label": "Internet Facing",
+          "kind": "boolean"
+        },
+        {
+          "logicalName": "grc_legalentity",
+          "label": "Legal Entity",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_companycode",
+          "label": "Company Code",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_constituentunit",
+          "label": "Constituent Unit",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_country",
+          "label": "Country",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_owner",
+          "label": "Owner",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_representative",
+          "label": "Representative",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_responsible",
+          "label": "Responsible",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_accountable",
+          "label": "Accountable",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_accountableunit",
+          "label": "Accountable Unit",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_vendor",
+          "label": "Vendor",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_manufacturer",
+          "label": "Manufacturer",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_supplier",
+          "label": "Supplier",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_products",
+          "label": "Products",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_application",
+          "label": "Application",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_parentapp",
+          "label": "Parent App",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_linkedobjects",
+          "label": "Linked Objects",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_lastsyncedon",
+          "label": "Last Synced On",
+          "kind": "datetime"
+        }
+      ]
+    },
+    {
+      "value": "Risk Reporting Units",
+      "label": "Risk Reporting Units",
+      "attributes": [
+        {
+          "logicalName": "grc_name",
+          "label": "Name",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_jiraobjectkey",
+          "label": "Jira Object Key",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_appid",
+          "label": "App ID",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_description",
+          "label": "Description",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_systemtype",
+          "label": "System type",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_servicetype",
+          "label": "Service Type",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_status",
+          "label": "Status",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_accesstype",
+          "label": "Access type",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_elementtype",
+          "label": "Element Type",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_elementcategory",
+          "label": "Element Category",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_aiclassification",
+          "label": "AI classification",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_criticality",
+          "label": "Criticality",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_confidentiality",
+          "label": "Confidentiality",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_integrity",
+          "label": "Integrity",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_availability",
+          "label": "Availability",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_authenticity",
+          "label": "Authenticity",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_rto",
+          "label": "RTO",
+          "kind": "number"
+        },
+        {
+          "logicalName": "grc_rpo",
+          "label": "RPO",
+          "kind": "number"
+        },
+        {
+          "logicalName": "grc_environment",
+          "label": "Environment",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_applicationenvironment",
+          "label": "Application Environment",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_os",
+          "label": "OS",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_internetfacing",
+          "label": "Internet Facing",
+          "kind": "boolean"
+        },
+        {
+          "logicalName": "grc_legalentity",
+          "label": "Legal Entity",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_companycode",
+          "label": "Company Code",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_constituentunit",
+          "label": "Constituent Unit",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_country",
+          "label": "Country",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_owner",
+          "label": "Owner",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_representative",
+          "label": "Representative",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_responsible",
+          "label": "Responsible",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_accountable",
+          "label": "Accountable",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_accountableunit",
+          "label": "Accountable Unit",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_vendor",
+          "label": "Vendor",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_manufacturer",
+          "label": "Manufacturer",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_supplier",
+          "label": "Supplier",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_products",
+          "label": "Products",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_application",
+          "label": "Application",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_parentapp",
+          "label": "Parent App",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_linkedobjects",
+          "label": "Linked Objects",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_lastsyncedon",
+          "label": "Last Synced On",
+          "kind": "datetime"
+        }
+      ]
+    },
+    {
+      "value": "Legal Entities",
+      "label": "Legal Entities",
+      "attributes": [
+        {
+          "logicalName": "grc_name",
+          "label": "Name",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_jiraobjectkey",
+          "label": "Jira Object Key",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_appid",
+          "label": "App ID",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_description",
+          "label": "Description",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_systemtype",
+          "label": "System type",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_servicetype",
+          "label": "Service Type",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_status",
+          "label": "Status",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_accesstype",
+          "label": "Access type",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_elementtype",
+          "label": "Element Type",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_elementcategory",
+          "label": "Element Category",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_aiclassification",
+          "label": "AI classification",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_criticality",
+          "label": "Criticality",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_confidentiality",
+          "label": "Confidentiality",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_integrity",
+          "label": "Integrity",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_availability",
+          "label": "Availability",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_authenticity",
+          "label": "Authenticity",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_rto",
+          "label": "RTO",
+          "kind": "number"
+        },
+        {
+          "logicalName": "grc_rpo",
+          "label": "RPO",
+          "kind": "number"
+        },
+        {
+          "logicalName": "grc_environment",
+          "label": "Environment",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_applicationenvironment",
+          "label": "Application Environment",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_os",
+          "label": "OS",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_internetfacing",
+          "label": "Internet Facing",
+          "kind": "boolean"
+        },
+        {
+          "logicalName": "grc_legalentity",
+          "label": "Legal Entity",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_companycode",
+          "label": "Company Code",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_constituentunit",
+          "label": "Constituent Unit",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_country",
+          "label": "Country",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_owner",
+          "label": "Owner",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_representative",
+          "label": "Representative",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_responsible",
+          "label": "Responsible",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_accountable",
+          "label": "Accountable",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_accountableunit",
+          "label": "Accountable Unit",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_vendor",
+          "label": "Vendor",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_manufacturer",
+          "label": "Manufacturer",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_supplier",
+          "label": "Supplier",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_products",
+          "label": "Products",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_application",
+          "label": "Application",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_parentapp",
+          "label": "Parent App",
+          "kind": "text"
+        },
+        {
+          "logicalName": "grc_linkedobjects",
+          "label": "Linked Objects",
           "kind": "text"
         },
         {
