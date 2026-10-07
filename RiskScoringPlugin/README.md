@@ -15,31 +15,125 @@ rating = approved matrix (max impact, likelihood)
 | `RiskAssessmentSchema.cs` | Every column name and choice value the plugin touches. The only file to edit if the schema changes |
 | `CalculateRiskScores.cs` | The `IPlugin`: reads the record, calls the method, writes the results back into the same save |
 
-## Build
+## Deploy from a ZIP download
 
-1. In an empty folder: `pac plugin init`. This creates a .NET Framework 4.6.2 class library
-   with the Dataverse SDK reference and a signing key.
-2. Delete the generated `Plugin1.cs`. Keep `PluginBase.cs` or delete it; this plugin doesn't use it.
-3. Copy the three `.cs` files from this folder into the project.
-4. `dotnet build -c Release`. The assembly is in `bin/Release/net462/`.
+Paths below assume Windows and a short working folder, `C:\dev`. Keep it short: long paths
+broke the PCF build on this machine before.
 
-These files were written for C# 7.3, the default for a net462 project, and have not been
-compiled in the environment they were written in. Expect to fix at most a typo on first build.
+### 1 · Get the code
 
-## Register (Plugin Registration Tool)
+Download the branch as a ZIP. It must be this branch, not `main`, which doesn't have the plugin:
 
-Register the assembly, then two steps on the `Grc.RiskScoring.CalculateRiskScores` type:
+```
+https://github.com/gregszewczyk/d365-sql-staging-generator/archive/refs/heads/claude/pcf-control-from-md-swk659.zip
+```
 
-| | Create step | Update step |
-|---|---|---|
-| Message | Create | Update |
-| Primary entity | `grc_riskassessment` | `grc_riskassessment` |
-| Stage | PreOperation | PreOperation |
-| Mode | Synchronous | Synchronous |
-| Filtering attributes | (n/a) | The 16 score columns below |
-| Image | None | Pre-image named `PreImage`: the 16 score columns plus `grc_assessmentstatus` |
+Extract it into `C:\dev`. The plugin source is then in:
 
-The 16 score columns:
+```
+C:\dev\d365-sql-staging-generator-claude-pcf-control-from-md-swk659\RiskScoringPlugin
+```
+
+### 2 · Build the DLL
+
+You need the .NET SDK and `pac`, the same tools the PCF build used. In PowerShell:
+
+```powershell
+mkdir C:\dev\RiskScoring
+cd C:\dev\RiskScoring
+pac plugin init
+Remove-Item Plugin1.cs
+Copy-Item C:\dev\d365-sql-staging-generator-claude-pcf-control-from-md-swk659\RiskScoringPlugin\*.cs .
+dotnet build -c Release
+```
+
+`pac plugin init` creates a .NET Framework 4.6.2 project with the Dataverse SDK and a signing
+key. Leave its `PluginBase.cs` where it is; it does no harm.
+
+A successful build ends with `Build succeeded` and produces:
+
+```
+C:\dev\RiskScoring\bin\Release\net462\RiskScoring.dll
+```
+
+These files were written for C# 7.3 but couldn't be compiled where they were written. If the
+build reports errors, copy the error lines back rather than editing around them.
+
+### 3 · Register the assembly
+
+Open the Plugin Registration Tool and connect to the **DEV** environment.
+
+1. **Register** → **Register New Assembly**
+2. Step 1: browse to `RiskScoring.dll`
+3. Step 2: tick the assembly and `Grc.RiskScoring.CalculateRiskScores`
+4. Isolation mode **Sandbox**, location **Database**
+5. **Register Selected Plugins**
+
+The tree now shows `(Assembly) RiskScoring` with `(Plugin) Grc.RiskScoring.CalculateRiskScores` under it.
+
+### 4 · Register the Create step
+
+Right-click `(Plugin) Grc.RiskScoring.CalculateRiskScores` → **Register New Step**:
+
+| Field | Value |
+|---|---|
+| Message | `Create` |
+| Primary Entity | `grc_riskassessment` |
+| Event Pipeline Stage | **PreOperation** |
+| Execution Mode | **Synchronous** |
+| Deployment | Server |
+
+Leave everything else as it is → **Register New Step**.
+
+### 5 · Register the Update step
+
+Same again, with these differences:
+
+| Field | Value |
+|---|---|
+| Message | `Update` |
+| Filtering Attributes | Click **…**, untick all, then tick the 16 score columns listed below |
+
+### 6 · Add the pre-image to the Update step
+
+Right-click the **Update** step → **Register New Image**:
+
+| Field | Value |
+|---|---|
+| Image type | **Pre Image** ticked, Post Image unticked |
+| Name | `PreImage` |
+| Entity Alias | `PreImage` |
+| Parameters | Click **…** and tick the 16 score columns plus **Assessment Status** (`grc_assessmentstatus`) |
+
+The **Entity Alias** must be exactly `PreImage`, capital P and I. The plugin looks the image up
+by that alias. If it's wrong, every update fails with "Risk scoring is missing its pre-image".
+
+### 7 · Add it to the solution
+
+In make.powerapps.com, open the solution:
+
+1. **Add existing** → **More** → **Developer** → **Plug-in assembly** → `RiskScoring`
+2. **Add existing** → **More** → **Developer** → **Plug-in step** → both steps
+
+The image travels with its step. From here, TEST and production get the plugin through the
+normal solution export and import. Nothing needs re-entering per environment.
+
+### 8 · Smoke test
+
+Open a Risk Assessment in **In Progress**, fill in the four inherent impacts and the likelihood,
+and save. Maximum Inherent Impact, Calculated Inherent Score and Calculated Inherent Risk Rating
+should fill in. The full test list is at the end of this file.
+
+If a save shows an error, turn on the trace log (**Settings** → **Administration** →
+**System Settings** → **Customization** → **Enable logging to plug-in trace log: All**), save
+again, and look under **Plug-in Trace Log** in Advanced Settings.
+
+### Updating the plugin later
+
+Rebuild, then in the Plugin Registration Tool select `(Assembly) RiskScoring` → **Update** →
+browse to the new DLL → **Update Selected Plugins**. The steps and image stay registered.
+
+### The 16 score columns
 
 ```
 grc_inherentfinancialimpact, grc_inherentcomplianceimpact, grc_inherentreputationalimpact,
@@ -52,8 +146,7 @@ grc_calculatedcurrentresidualscore, grc_calculatedcurrentresidualriskrating
 ```
 
 The calculated columns are in the filter on purpose: if anything writes one directly, the
-plugin fires and puts the correct value back. Add the assembly and both steps to the
-solution; unlike a webhook, they hold nothing environment-specific.
+plugin fires and puts the correct value back.
 
 ## Behaviour
 
